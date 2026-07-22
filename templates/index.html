@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crowd Density Monitor</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-dark: #0d1c3b;
+            --primary-light: #1a365d;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-yellow: #f39c12;
+            --accent-red: #e74c3c;
+            --text-light: #f8f9fa;
+            --text-dark: #2c3e50;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #74ebd5, #ACB6E5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            animation: fadeIn 1s ease-in-out;
+        }
+        
+        h3 {
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            margin-bottom: 2rem;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .source-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: linear-gradient(to right, #4b6cb7, #182848);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        .upload-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn i {
+            font-size: 1.2rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(71, 118, 230, 0.4);
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(71, 118, 230, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: linear-gradient(to right, #11998e, #38ef7d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(to right, #f5576c, #f093fb);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+        
+        .btn-danger:hover {
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: none;
+            gap: 0.5rem;
+            align-items: center;
+            color: var(--text-light);
+            font-weight: 500;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .selected-file {
+            margin-left: 1rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+        
+        .file-name {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .feeds-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .feed-content {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 350px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .feed-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+            transition: transform 0.5s ease;
+        }
+        
+        .feed-content:hover img {
+            transform: scale(1.02);
+        }
+        
+        .feed-title {
+            color: var(--text-dark);
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        
+        .feed-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-green));
+            border-radius: 3px;
+        }
+        
+        .people-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            min-width: 180px;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all var(--transition-speed);
+        }
+        
+        .people-counter.low {
+            background: linear-gradient(to right, rgba(46, 204, 113, 0.8), rgba(26, 188, 156, 0.8));
+        }
+        
+        .people-counter.medium {
+            background: linear-gradient(to right, rgba(241, 196, 15, 0.8), rgba(243, 156, 18, 0.8));
+        }
+        
+        .people-counter.high {
+            background: linear-gradient(to right, rgba(231, 76, 60, 0.8), rgba(192, 57, 43, 0.8));
+        }
+        
+        #densityIndicator {
+            margin-top: 0.3rem;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        .info-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+            transition: transform var(--transition-speed);
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        .info-section:hover {
+            transform: translateY(-5px);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .info-card {
+            background: linear-gradient(to bottom right, #f5f7fa, #c3cfe2);
+            border-radius: 10px;
+            padding: 1.2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .info-card h4 {
+            color: var(--primary-light);
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-card p {
+            font-size: 0.95rem;
+            color: #5d6778;
+        }
+        
+        .graph-container {
+            width: 100%;
+            height: 400px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-top: 1.5rem;
+        }
+        
+        .zones-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .zone-card {
+            background: linear-gradient(to bottom right, #fff, #f0f2f5);
+            border-radius: 10px;
+            padding: 1.2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            border-left: 5px solid #3498db;
+        }
+        
+        .zone-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .zone-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            color: var(--text-dark);
+        }
+        
+        .zone-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: inline-block;
+        }
+        
+        .zone-details {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            color: #5d6778;
+        }
+        
+        .recommendations {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-left: 5px solid var(--accent-red);
+            color: var(--text-dark);
+            box-shadow: var(--card-shadow);
+            animation: slideUp 0.7s ease-out;
+        }
+        
+        .recommendations h3 {
+            margin-top: 0;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .recommendations ul {
+            margin: 1rem 0 0;
+            padding-left: 1.5rem;
+        }
+        
+        .recommendations li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .recommendations li::before {
+            content: '●';
+            color: var(--accent-red);
+            position: absolute;
+            left: -1.2rem;
+        }
+        
+        .density-high {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+        
+        .density-medium {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+        
+        .density-low {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        .alert-message {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: linear-gradient(to right, var(--accent-red), #c0392b);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsiveness */
+        @media (max-width: 992px) {
+            .feeds-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .source-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .upload-form {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .file-input-wrapper {
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .selected-file {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                width: 100%;
+                text-align: center;
+            }
+        }
+        #webcam{
+            text-decoration: none;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="page-container">
+        <h1>Crowd Density Monitor</h1>
+        
+        <div class="source-controls">
+            <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                <div class="file-input-wrapper">
+                    <button class="btn btn-primary" type="button">
+                        <i class="fas fa-file-video"></i> Choose Video File
+                    </button>
+                    <input type="file" name="video" id="videoFile" accept=".mp4,.avi,.mov,.mkv,.webm">
+                </div>
+                <button type="submit" class="btn btn-success" id="uploadButton">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload & Process
+                </button>
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div> Processing...
+                </div>
+                <div class="selected-file" id="selectedFile"></div>
+            </form>
+            <a href="/use_webcam" id="webcam">
+                <button class="btn btn-danger">
+                    <i class="fas fa-camera"></i> Use Webcam
+                </button>
+            </a>
+        </div>
+        
+        <div class="feeds-container">
+            <div class="card">
+                <h3 class="feed-title">Live Person Detection</h3>
+                <div class="feed-content">
+                    <img src="{{ url_for('video_feed') }}" alt="Video Feed">
+                    <div class="people-counter low" id="peopleCounter">
+                        <div id="countDisplay"><i class="fas fa-users"></i> People: 0</div>
+                        <div id="densityIndicator">Low Density</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="feed-title">Density Heatmap</h3>
+                <div class="feed-content">
+                    <img src="{{ url_for('heatmap_feed') }}" alt="Heatmap Feed">
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="zone-info-container">
+            <h3><i class="fas fa-map-marker-alt"></i> Zone Information</h3>
+            <div class="zones-info" id="zones-info">
+                <!-- Zone cards will be populated here dynamically -->
+            </div>
+        </div>
+        
+        <div class="recommendations" id="recommendations">
+            <h3><i class="fas fa-exclamation-triangle"></i> Movement Recommendations</h3>
+            <ul id="recommendation-list">
+                <!-- Recommendations will be populated here dynamically -->
+            </ul>
+        </div>
+        
+        <div class="info-section">
+            <h3><i class="fas fa-chart-line"></i> Crowd Density Trends</h3>
+            <div class="graph-container">
+                <canvas id="crowdTrendChart"></canvas>
+            </div>
+            <div class="info-card" style="margin-top: 1.5rem;">
+                <h4><i class="fas fa-chart-pie"></i> Predicted Count (Next Min)</h4>
+                <div id="predictionDisplay">Waiting for prediction...</div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h3><i class="fas fa-info-circle"></i> System Information</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4><i class="fas fa-cogs"></i> How It Works</h4>
+                    <p>This system uses YOLOv8 to detect people in real-time from your webcam or uploaded video. The smooth gradient heatmap shows crowd density using weather map-style visualization, transitioning from blue (low) to red (high density).</p>
+                </div>
+                <div class="info-card">
+                    <h4><i class="fas fa-users"></i> Crowd Monitoring</h4>
+                    <p>The color of the people counter changes based on crowd density: green for low density, yellow/orange for medium, and red for high density areas. This provides an instant visual indication of crowd levels.</p>
+                </div>
+                <div class="info-card">
+                    <h4><i class="fas fa-file-video"></i> Supported Video Formats</h4>
+                    <p>You can upload .mp4, .avi, .mov, .mkv and .webm video files (max 100MB). The system will analyze the video and display both person detection results and the activity heatmap.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert-message" id="alertMessage">
+        <i class="fas fa-exclamation-circle"></i> Alert: High density detected!
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // DOM Elements
+        const fileInput = document.getElementById('videoFile');
+const selectedFile = document.getElementById('selectedFile');
+const fileButton = document.querySelector('.btn-primary');
+const uploadForm = document.getElementById('uploadForm');
+const uploadButton = document.getElementById('uploadButton');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const peopleCounter = document.getElementById('peopleCounter');
+const countDisplay = document.getElementById('countDisplay');
+const densityIndicator = document.getElementById('densityIndicator');
+const alertMessage = document.getElementById('alertMessage');
+
+// File selection handler
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+        const fileName = this.files[0].name;
+        fileButton.innerHTML = '<i class="fas fa-check"></i> File Selected';
+        selectedFile.innerHTML = '<span class="file-name">' + fileName + '</span>';
+    } else {
+        fileButton.innerHTML = '<i class="fas fa-file-video"></i> Choose Video File';
+        selectedFile.textContent = '';
+    }
+});
+
+// Form submission handler
+uploadForm.addEventListener('submit', function() {
+    uploadButton.disabled = true;
+    loadingIndicator.style.display = 'flex';
+});
+
+// Alert threshold
+const alertThreshold = 33;
+
+// Variables to track alert state
+// ADDED: This variable helps prevent duplicate alerts
+let isAlertShowing = false;
+
+// Show alert with auto-dismiss - centered positioning
+// MODIFIED: Simplified alert system
+function showAlert(message) {
+    // Only show alert if it's not already showing
+    if (!isAlertShowing) {
+        // Use innerHTML instead of textContent to support HTML elements
+        alertMessage.innerHTML = message;
+        alertMessage.style.display = 'block';
+        alertMessage.style.position = 'fixed';
+        alertMessage.style.top = '20px'; // Position at top with some padding
+        alertMessage.style.left = '50%';
+        alertMessage.style.transform = 'translateX(-50%)'; // Center horizontally only
+        alertMessage.style.zIndex = '1000';
+        
+        // Add some basic styles if not already in CSS
+        alertMessage.style.backgroundColor = '#f44336';
+        alertMessage.style.color = 'white';
+        alertMessage.style.padding = '15px 20px';
+        alertMessage.style.borderRadius = '5px';
+        alertMessage.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+        
+        isAlertShowing = true;
+    }
+}
+
+// Hide alert
+// MODIFIED: Update alert state tracking
+function hideAlert() {
+    if (isAlertShowing) {
+        alertMessage.style.display = 'none';
+        isAlertShowing = false;
+    }
+}
+
+// Update people count and fetch prediction
+function updatePeopleCount() {
+    fetch('/heatmap_data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const currentCount = data.people_count;
+            
+            // Log heatmap data for debugging
+            console.log('Heatmap data received:', data);
+            
+            // Update the count display
+            countDisplay.innerHTML = `<i class="fas fa-users"></i> People: ${currentCount}`;
+            
+            // Update density text and styling
+            let densityText = "Low Density";
+            peopleCounter.classList.remove('low', 'medium', 'high');
+            
+            switch(data.density_level) {
+                case 'low':
+                    densityText = "Low Density";
+                    peopleCounter.classList.add('low');
+                    break;
+                case 'medium':
+                    densityText = "Medium Density";
+                    peopleCounter.classList.add('medium');
+                    break;
+                case 'high':
+                    densityText = "High Density";
+                    peopleCounter.classList.add('high');
+                    break;
+            }
+            
+            densityIndicator.textContent = densityText;
+            
+            // MODIFIED: Simplified alert logic - only check threshold once
+            // Check current count against threshold - single alert logic
+            if (currentCount > alertThreshold) {
+                showAlert("<i class='fas fa-exclamation-triangle'></i> Alert: Current count exceeds threshold!");
+            } else {
+                hideAlert();
+            }
+            
+            // Fetch prediction
+            getNextMinutePrediction(currentCount);
+        })
+        .catch(error => {
+            console.error('Error fetching heatmap data:', error);
+        });
+}
+
+// Store zone data to prevent flickering
+let lastZoneData = null;
+
+// Update zone information
+function updateZoneInfo() {
+    fetch('/zone_data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Store valid zone data when received
+            if (data && data.zones && Object.keys(data.zones).length > 0) {
+                lastZoneData = data;
+            } else if (lastZoneData) {
+                // Use last valid data if current data is empty or invalid
+                data = lastZoneData;
+            }
+            
+            // Update zone information
+            const zonesContainer = document.getElementById('zones-info');
+            if (!zonesContainer) return; // Exit if container doesn't exist
+            
+            zonesContainer.innerHTML = '';
+            
+            for (const [zoneId, zoneInfo] of Object.entries(data.zones)) {
+                const zoneCard = document.createElement('div');
+                zoneCard.className = 'zone-card';
+                
+                // Convert BGR color to CSS RGB color
+                const bgr = zoneInfo.color;
+                const rgb = `rgb(${bgr[2]}, ${bgr[1]}, ${bgr[0]})`;
+                
+                // Determine density class for styling
+                let densityClass = 'density-low';
+                if (zoneInfo.density === 'medium') {
+                    densityClass = 'density-medium';
+                } else if (zoneInfo.density === 'high') {
+                    densityClass = 'density-high';
+                }
+                
+                zoneCard.innerHTML = `
+                    <div class="zone-title">
+                        <span class="zone-color" style="background-color: ${rgb};"></span>
+                        Zone ${zoneId}
+                    </div>
+                    <div class="zone-details">People Count: ${zoneInfo.count}</div>
+                    <div class="zone-details">Density: <span class="${densityClass}">${zoneInfo.density.toUpperCase()}</span></div>
+                `;
+                
+                zonesContainer.appendChild(zoneCard);
+            }
+            
+            // Update recommendations
+            const recommendationList = document.getElementById('recommendation-list');
+            if (recommendationList) {
+                recommendationList.innerHTML = '';
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(recommendation => {
+                        const li = document.createElement('li');
+                        li.textContent = recommendation;
+                        recommendationList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'No movement recommendations at this time.';
+                    recommendationList.appendChild(li);
+                }
+            }
+            
+            // If there was a total-people-count element in the document
+            const totalPeopleCount = document.getElementById('total-people-count');
+            if (totalPeopleCount && data.total_people) {
+                totalPeopleCount.textContent = data.total_people;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching zone data:', error);
+            // If we have previous valid data, continue using it
+            if (lastZoneData) {
+                updateZonesDisplay(lastZoneData);
+            }
+        });
+}
+
+// Function to update zones display with data
+function updateZonesDisplay(data) {
+    const zonesContainer = document.getElementById('zones-info');
+    if (!zonesContainer) return;
+    
+    zonesContainer.innerHTML = '';
+    
+    for (const [zoneId, zoneInfo] of Object.entries(data.zones)) {
+        const zoneCard = document.createElement('div');
+        zoneCard.className = 'zone-card';
+        
+        // Convert BGR color to CSS RGB color
+        const bgr = zoneInfo.color;
+        const rgb = `rgb(${bgr[2]}, ${bgr[1]}, ${bgr[0]})`;
+        
+        // Determine density class for styling
+        let densityClass = 'density-low';
+        if (zoneInfo.density === 'medium') {
+            densityClass = 'density-medium';
+        } else if (zoneInfo.density === 'high') {
+            densityClass = 'density-high';
+        }
+        
+        zoneCard.innerHTML = `
+            <div class="zone-title">
+                <span class="zone-color" style="background-color: ${rgb};"></span>
+                Zone ${zoneId}
+            </div>
+            <div class="zone-details">People Count: ${zoneInfo.count}</div>
+            <div class="zone-details">Density: <span class="${densityClass}">${zoneInfo.density.toUpperCase()}</span></div>
+        `;
+        
+        zonesContainer.appendChild(zoneCard);
+    }
+}
+
+// Update information periodically with error handling
+let zoneInfoUpdateInterval = setInterval(updateZoneInfo, 3000);
+
+// Get prediction for next minute
+function getNextMinutePrediction(currentCrowd) {
+    const now = new Date();
+    console.log("current crowd = ", currentCrowd);
+    const payload = {
+        hour: now.getHours(),
+        day_of_week: (now.getDay() + 6) % 7, // Adjust Sunday (0) to be last
+        current_crowd: currentCrowd
+    };
+    
+    // Log the payload being sent
+    console.log('Sending prediction request with payload:', payload);
+    
+    fetch("http://localhost:8000/predict", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Log the full response
+        console.log('Prediction API response:', data);
+        
+        // Check if the expected field exists
+        if (data && typeof data.next_minute_prediction !== 'undefined') {
+            let prediction = data.next_minute_prediction;
+            
+            // Validate prediction
+            if (typeof prediction !== 'number' || prediction < 0) {
+                console.warn('Invalid prediction value:', prediction);
+                throw new Error('Invalid prediction value received');
+            }
+            
+            // Add some randomness for demo purposes
+            prediction = Math.round(prediction + Math.floor(Math.random() * 11) + 2);
+            
+            // Update prediction display with icon
+            const predictionDiv = document.getElementById('predictionDisplay');
+            if (predictionDiv) {
+                predictionDiv.innerHTML = `<i class="fas fa-chart-line"></i> Next Min Crowd Prediction: <strong>${prediction}</strong>`;
+            }
+            
+            // Update chart with current count and prediction
+            updateChart(currentCrowd, prediction);
+            
+            // REMOVED: Alert logic from prediction function
+            // The alert will only be shown based on current count in updatePeopleCount()
+        } else {
+            console.error('Prediction response missing next_minute_prediction:', data);
+            throw new Error('Missing next_minute_prediction in response');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching prediction:', error);
+        // Fallback: Use current count as prediction
+        const predictionDiv = document.getElementById('predictionDisplay');
+        if (predictionDiv) {
+            predictionDiv.textContent = 'Prediction unavailable';
+        }
+        updateChart(currentCrowd, currentCrowd);
+    });
+}
+
+// Chart setup and update
+let crowdChart;
+const maxDataPoints = 60; // Show data for 60 time points
+const crowdData = {
+    labels: [], // For timestamps
+    currentCounts: [], // For actual counts
+    predictedCounts: [] // For predicted counts
+};
+
+function setupCrowdChart() {
+    const ctx = document.getElementById('crowdTrendChart');
+    if (!ctx) {
+        console.error('Canvas element "crowdTrendChart" not found');
+        return;
+    }
+    
+    const ctxContext = ctx.getContext('2d');
+    
+    // Set gradient for chart
+    const gradientFill = ctxContext.createLinearGradient(0, 0, 0, 400);
+    gradientFill.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
+    gradientFill.addColorStop(1, 'rgba(52, 152, 219, 0.0)');
+    
+    // Create alert message element if it doesn't exist
+    if (!document.querySelector('.graph-container .alert-message')) {
+        const alertMessageElement = document.createElement('div');
+        alertMessageElement.className = 'alert-message';
+        alertMessageElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Overcrowding predicted!';
+        const graphContainer = document.querySelector('.graph-container');
+        if (graphContainer) {
+            graphContainer.appendChild(alertMessageElement);
+        }
+    }
+    
+    crowdChart = new Chart(ctxContext, {
+        type: 'line',
+        data: {
+            labels: crowdData.labels,
+            datasets: [
+                {
+                    label: 'Predicted Crowd',
+                    data: crowdData.predictedCounts,
+                    borderColor: '#3498db',
+                    backgroundColor: gradientFill,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#3498db',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#3498db'
+                },
+                {
+                    label: 'Current Crowd',
+                    data: crowdData.currentCounts,
+                    borderColor: '#7f8c8d',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.2,
+                    fill: false,
+                    pointRadius: 3
+                },
+                {
+                    label: 'Alert Threshold',
+                    data: Array(maxDataPoints).fill(alertThreshold),
+                    borderColor: '#e74c3c',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Disable animations
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'People Count',
+                        font: {
+                            family: "'Poppins', sans-serif",
+                            size: 14
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time',
+                        font: {
+                            family: "'Poppins', sans-serif",
+                            size: 14
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            family: "'Poppins', sans-serif",
+                            size: 12
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    titleFont: {
+                        family: "'Poppins', sans-serif",
+                        size: 13
+                    },
+                    bodyFont: {
+                        family: "'Poppins', sans-serif",
+                        size: 12
+                    },
+                    padding: 10,
+                    cornerRadius: 6,
+                    caretSize: 6
+                }
+            }
+        }
+    });
+}
+
+function updateChart(currentCount, predictedCount) {
+    const now = new Date();
+    const timeLabel = now.getHours() + ':' + 
+                      (now.getMinutes() < 10 ? '0' : '') + now.getMinutes() + ':' + 
+                      (now.getSeconds() < 10 ? '0' : '') + now.getSeconds();
+    
+    // Log chart update data
+    console.log('Updating chart with:', { currentCount, predictedCount, timeLabel });
+    
+    // Add new data
+    crowdData.labels.push(timeLabel);
+    crowdData.currentCounts.push(currentCount);
+    crowdData.predictedCounts.push(predictedCount);
+    
+    // Remove old data if we exceed maxDataPoints
+    if (crowdData.labels.length > maxDataPoints) {
+        crowdData.labels.shift();
+        crowdData.currentCounts.shift();
+        crowdData.predictedCounts.shift();
+    }
+    
+    // Update chart if it exists
+    if (crowdChart) {
+        try {
+            crowdChart.update('none'); // Update without animation
+        } catch (error) {
+            console.error('Error updating chart:', error);
+        }
+    }
+    
+    // REMOVED: Alert handling moved to updatePeopleCount function
+}
+
+// Initialize on page load with error handling
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        setupCrowdChart();
+        updatePeopleCount();
+        updateZoneInfo(); // Initial zone update
+        
+        // Set up interval with error handling
+        const peopleCountInterval = setInterval(function() {
+            try {
+                updatePeopleCount();
+            } catch (error) {
+                console.error('Error in updatePeopleCount interval:', error);
+            }
+        }, 1000);
+        
+        // Clean up intervals if page unloads
+        window.addEventListener('beforeunload', function() {
+            clearInterval(peopleCountInterval);
+            clearInterval(zoneInfoUpdateInterval);
+        });
+    } catch (error) {
+        console.error('Error during initialization:', error);
+    }
+});
+    </script>
+</body>
+</html>
