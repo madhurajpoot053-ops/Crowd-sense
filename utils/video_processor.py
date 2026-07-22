@@ -22,7 +22,7 @@ class VideoProcessor:
         self.heatmap_generator = heatmap_generator
         
         self.using_webcam = False
-        self.video_path = Config.DEFAULT_VIDEO_PATH
+        self.video_path = Config.DEFAULT_VIDEO_PATH if Config.DEFAULT_VIDEO_PATH and os.path.isfile(Config.DEFAULT_VIDEO_PATH) else None
         self.cap = None
         self.total_people_count = 0
         self.last_update_time = time.time()
@@ -35,6 +35,9 @@ class VideoProcessor:
             use_webcam: Boolean, True for webcam, False for video file
             video_path: Path to video file (if not using webcam)
         """
+        if use_webcam and not Config.ENABLE_WEBCAM:
+            use_webcam = False
+
         self.using_webcam = use_webcam
         
         if not use_webcam and video_path:
@@ -43,10 +46,11 @@ class VideoProcessor:
         # Release current capture and open new source
         if self.cap is not None:
             self.cap.release()
+            self.cap = None
         
         if use_webcam:
             self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
-        else:
+        elif self.video_path:
             self.cap = cv2.VideoCapture(self.video_path)
     
     def process_frame(self, frame):
@@ -165,7 +169,7 @@ class VideoProcessor:
         if self.cap is None:
             if self.using_webcam:
                 self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
-            elif self.video_path:
+            elif self.video_path and os.path.isfile(self.video_path):
                 self.cap = cv2.VideoCapture(self.video_path)
 
         # Check if video source is valid

@@ -49,7 +49,8 @@ class Config:
     }
     
     # Video settings
-    DEFAULT_VIDEO_PATH = "uploads/videoplayback (1).mp4"
+    DEFAULT_VIDEO_PATH = None
+    ENABLE_WEBCAM = False
     WEBCAM_INDEX = 0
     VIDEO_FPS = 30
     FRAME_DELAY = 0.03  # For uploaded videos (~30fps)

@@ -4,6 +4,7 @@ Video feed routes
 from flask import Response
 import time
 import cv2
+import numpy as np
 
 def register_video_routes(app, video_processor, heatmap_generator, zone_manager):
     """
@@ -28,9 +29,15 @@ def register_video_routes(app, video_processor, heatmap_generator, zone_manager)
     
     def generate_heatmap():
         """Generator for heatmap frames"""
+        blank_frame = cv2.imencode('.jpg', np.zeros((400, 400, 3), dtype=np.uint8))[1].tobytes()
         while True:
             time.sleep(0.1)
             
+            if video_processor.cap is None or not video_processor.cap.isOpened():
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
+                continue
+
             # Get current data
             zones = zone_manager.get_zones()
             total_people_count = video_processor.get_people_count()

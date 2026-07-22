@@ -60,7 +60,8 @@ def register_main_routes(app, video_processor):
     
     @app.route('/use_webcam')
     def use_webcam():
-        # Switch to webcam mode
-        video_processor.set_video_source(use_webcam=True)
+        # Switch to webcam mode only when enabled in config
+        if Config.ENABLE_WEBCAM:
+            video_processor.set_video_source(use_webcam=True)
         
         return redirect(url_for('home'))
