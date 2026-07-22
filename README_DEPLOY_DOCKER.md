@@ -8,6 +8,8 @@ From the project root:
 docker build -t crowd-sense .
 ```
 
+> Note: `gunicorn` is required by the Docker startup command and is installed from `requirements.txt`.
+
 ## Run the container
 
 ```bash
