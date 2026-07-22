@@ -30,7 +30,7 @@ register_api_routes(app, video_processor, heatmap_generator, zone_manager)
 
 if __name__ == "__main__":
     try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
     finally:
         # Cleanup resources
         video_processor.cleanup()
