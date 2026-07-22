@@ -33,6 +33,7 @@ http://localhost:5000
 ## Notes
 
 - `yolov8n.pt` must exist in the project root.
+- The Docker image installs OpenCV system libraries needed by `opencv-python`.
 - The `uploads` folder is mounted so uploaded videos persist.
 - If you deploy in production, use a strong `SECRET_KEY` and consider a managed volume for uploads.
 
