@@ -21,9 +21,9 @@ class VideoProcessor:
         self.zone_manager = zone_manager
         self.heatmap_generator = heatmap_generator
         
-        self.using_webcam = True
+        self.using_webcam = False
         self.video_path = Config.DEFAULT_VIDEO_PATH
-        self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
+        self.cap = None
         self.total_people_count = 0
         self.last_update_time = time.time()
     
@@ -162,16 +162,17 @@ class VideoProcessor:
     def generate_frames(self):
         """Generator for video frames"""
         # Set up video source
-        if not self.using_webcam and self.video_path:
-            if self.cap is not None:
-                self.cap.release()
-            self.cap = cv2.VideoCapture(self.video_path)
-        
-        # Check if video source is valid
-        if not self.cap.isOpened():
+        if self.cap is None:
             if self.using_webcam:
                 self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
-                if not self.cap.isOpened():
+            elif self.video_path:
+                self.cap = cv2.VideoCapture(self.video_path)
+
+        # Check if video source is valid
+        if self.cap is None or not self.cap.isOpened():
+            if self.using_webcam:
+                self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
+                if self.cap is None or not self.cap.isOpened():
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + 
                            cv2.imencode('.jpg', np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes() + 
