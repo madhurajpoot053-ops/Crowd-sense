@@ -526,8 +526,94 @@
                 text-align: center;
             }
         }
-        #webcam{
+        #webcam {
             text-decoration: none;
+        }
+
+        /* Browser Webcam Styles */
+        .webcam-section {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            animation: fadeIn 0.8s ease-in-out;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .webcam-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #74ebd5;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .webcam-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .btn-webcam {
+            background: linear-gradient(to right, #00b4db, #0083b0);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,180,219,0.4);
+        }
+        .btn-webcam:hover {
+            box-shadow: 0 6px 20px rgba(0,180,219,0.6);
+            transform: translateY(-2px);
+        }
+        .btn-stop-webcam {
+            background: linear-gradient(to right, #f5576c, #f093fb);
+            color: white;
+            display: none;
+        }
+        .webcam-status {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            color: #aab;
+        }
+        .webcam-status.active {
+            background: rgba(46,204,113,0.2);
+            color: #2ecc71;
+        }
+        .webcam-status.error {
+            background: rgba(231,76,60,0.2);
+            color: #e74c3c;
+        }
+        .webcam-feeds {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .webcam-feeds.visible {
+            display: grid;
+        }
+        .webcam-feed-label {
+            font-size: 0.8rem;
+            color: #aab;
+            text-align: center;
+            margin-bottom: 0.4rem;
+        }
+        .webcam-canvas-wrap {
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+        #webcamVideo, #webcamCanvas, #annotatedCanvas {
+            width: 100%;
+            border-radius: 10px;
+            display: block;
+        }
+        #webcamVideo { display: none; }
+        #annotatedCanvas { background: #111; }
+        @media (max-width: 600px) {
+            .webcam-feeds { grid-template-columns: 1fr; }
         }
     </style>
 
@@ -552,11 +638,44 @@
                 </div>
                 <div class="selected-file" id="selectedFile"></div>
             </form>
-            <a href="/use_webcam" id="webcam">
+            <a href="/use_webcam" id="webcam" style="display:none;">
                 <button class="btn btn-danger">
-                    <i class="fas fa-camera"></i> Use Webcam
+                    <i class="fas fa-camera"></i> Use Server Webcam
                 </button>
             </a>
+        </div>
+
+        <!-- Browser Webcam Section -->
+        <div class="webcam-section" id="webcamSection">
+            <div class="webcam-title"><i class="fas fa-camera"></i> Browser Webcam (Live Detection)</div>
+            <div class="webcam-controls">
+                <button class="btn btn-webcam" id="startWebcamBtn" onclick="startBrowserWebcam()">
+                    <i class="fas fa-video"></i> Start Webcam
+                </button>
+                <button class="btn btn-danger btn-stop-webcam" id="stopWebcamBtn" onclick="stopBrowserWebcam()">
+                    <i class="fas fa-stop-circle"></i> Stop Webcam
+                </button>
+                <span class="webcam-status" id="webcamStatus">Camera not started</span>
+            </div>
+            <!-- Hidden video for getUserMedia capture -->
+            <video id="webcamVideo" autoplay muted playsinline></video>
+            <!-- Canvas to capture frames (hidden) -->
+            <canvas id="webcamCanvas" style="display:none;"></canvas>
+            <!-- Display feeds -->
+            <div class="webcam-feeds" id="webcamFeeds">
+                <div>
+                    <div class="webcam-feed-label">📷 Raw Camera</div>
+                    <div class="webcam-canvas-wrap">
+                        <canvas id="rawPreviewCanvas"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <div class="webcam-feed-label">🤖 YOLO Detection</div>
+                    <div class="webcam-canvas-wrap">
+                        <canvas id="annotatedCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="feeds-container">
@@ -1162,5 +1281,136 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
     </script>
+
+    <script>
+    /* =========================================================
+       Browser Webcam — getUserMedia → /process_frame → display
+       ========================================================= */
+    let webcamStream = null;
+    let webcamFrameLoop = null;
+    let webcamRunning = false;
+    const WEBCAM_FPS = 5; // frames per second sent to server
+
+    async function startBrowserWebcam() {
+        const statusEl = document.getElementById('webcamStatus');
+        const startBtn = document.getElementById('startWebcamBtn');
+        const stopBtn  = document.getElementById('stopWebcamBtn');
+        const feedDiv  = document.getElementById('webcamFeeds');
+        const videoEl  = document.getElementById('webcamVideo');
+
+        statusEl.textContent = 'Requesting camera permission…';
+        statusEl.className = 'webcam-status';
+
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'environment' },
+                audio: false
+            });
+        } catch (err) {
+            const msg = err.name === 'NotAllowedError'
+                ? 'Camera permission denied. Please allow camera access in your browser.'
+                : `Camera error: ${err.message}`;
+            statusEl.textContent = msg;
+            statusEl.className = 'webcam-status error';
+            return;
+        }
+
+        videoEl.srcObject = webcamStream;
+        await videoEl.play();
+
+        webcamRunning = true;
+        startBtn.style.display = 'none';
+        stopBtn.style.display = '';
+        feedDiv.classList.add('visible');
+        statusEl.textContent = '🟢 Live — sending frames for detection';
+        statusEl.className = 'webcam-status active';
+
+        scheduleNextWebcamFrame();
+    }
+
+    function scheduleNextWebcamFrame() {
+        if (!webcamRunning) return;
+        setTimeout(captureAndSendFrame, 1000 / WEBCAM_FPS);
+    }
+
+    async function captureAndSendFrame() {
+        if (!webcamRunning) return;
+
+        const videoEl   = document.getElementById('webcamVideo');
+        const captureCanvas = document.getElementById('webcamCanvas');
+        const rawCanvas = document.getElementById('rawPreviewCanvas');
+        const annotated = document.getElementById('annotatedCanvas');
+
+        const w = videoEl.videoWidth  || 640;
+        const h = videoEl.videoHeight || 480;
+
+        // Size all canvases
+        [captureCanvas, rawCanvas, annotated].forEach(c => { c.width = w; c.height = h; });
+
+        // Draw raw frame
+        const ctx = captureCanvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, w, h);
+
+        // Show raw preview
+        rawCanvas.getContext('2d').drawImage(videoEl, 0, 0, w, h);
+
+        // Convert to JPEG base64
+        const frameB64 = captureCanvas.toDataURL('image/jpeg', 0.7);
+
+        try {
+            const resp = await fetch('/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ frame: frameB64 })
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.frame) {
+                    // Draw annotated frame
+                    const img = new Image();
+                    img.onload = () => annotated.getContext('2d').drawImage(img, 0, 0, w, h);
+                    img.src = data.frame;
+
+                    // Update people counter from webcam data too
+                    if (typeof data.people_count !== 'undefined') {
+                        countDisplay.innerHTML = `<i class="fas fa-users"></i> People: ${data.people_count}`;
+                        peopleCounter.classList.remove('low', 'medium', 'high');
+                        peopleCounter.classList.add(data.density_level || 'low');
+                        densityIndicator.textContent =
+                            (data.density_level || 'low').charAt(0).toUpperCase() +
+                            (data.density_level || 'low').slice(1) + ' Density';
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Frame send error:', e);
+        }
+
+        scheduleNextWebcamFrame();
+    }
+
+    function stopBrowserWebcam() {
+        webcamRunning = false;
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(t => t.stop());
+            webcamStream = null;
+        }
+        const startBtn = document.getElementById('startWebcamBtn');
+        const stopBtn  = document.getElementById('stopWebcamBtn');
+        const feedDiv  = document.getElementById('webcamFeeds');
+        const statusEl = document.getElementById('webcamStatus');
+        startBtn.style.display = '';
+        stopBtn.style.display = 'none';
+        feedDiv.classList.remove('visible');
+        statusEl.textContent = 'Camera stopped';
+        statusEl.className = 'webcam-status';
+    }
+
+    // Hide browser webcam on mobile if getUserMedia not supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        document.getElementById('webcamSection').style.display = 'none';
+    }
+    </script>
 </body>
-</html>
+</html>

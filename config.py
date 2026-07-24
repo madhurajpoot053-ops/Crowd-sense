@@ -50,7 +50,8 @@ class Config:
     
     # Video settings
     DEFAULT_VIDEO_PATH = None
-    ENABLE_WEBCAM = True
-    WEBCAM_INDEX = 0
+    # Set ENABLE_WEBCAM=1 in environment to allow webcam access (disabled by default on servers)
+    ENABLE_WEBCAM = os.environ.get('ENABLE_WEBCAM', '0') == '1'
+    WEBCAM_INDEX = int(os.environ.get('WEBCAM_INDEX', '0'))
     VIDEO_FPS = 30
     FRAME_DELAY = 0.03  # For uploaded videos (~30fps)

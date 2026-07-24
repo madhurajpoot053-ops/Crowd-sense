@@ -157,7 +157,12 @@ class VideoProcessor:
                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, density_color, 2)
         
         # Add source indicator
-        source_text = "Source: Webcam" if self.using_webcam else f"Source: Video - {os.path.basename(self.video_path)}"
+        if self.using_webcam:
+            source_text = "Source: Webcam"
+        elif self.video_path:
+            source_text = f"Source: Video - {os.path.basename(self.video_path)}"
+        else:
+            source_text = "No source loaded"
         cv2.putText(frame, source_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         cv2.putText(frame, source_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
         
@@ -211,15 +216,16 @@ class VideoProcessor:
         while True:
             # Set up video source if needed
             if self.cap is None or not self.cap.isOpened():
-                if self.using_webcam:
+                if self.using_webcam and Config.ENABLE_WEBCAM:
                     self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
-                elif self.video_path and os.path.isfile(self.video_path):
+                elif not self.using_webcam and self.video_path and os.path.isfile(self.video_path):
                     self.cap = cv2.VideoCapture(self.video_path)
                 
                 if self.cap is None or not self.cap.isOpened():
+                    # No valid source — serve a blank frame and back off to avoid log spam
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
-                    time.sleep(0.1)
+                    time.sleep(2.0)
                     continue
 
             try:
