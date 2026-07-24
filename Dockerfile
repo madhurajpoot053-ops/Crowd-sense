@@ -22,4 +22,4 @@ RUN mkdir -p /app/uploads
 EXPOSE 5000
 ENV PORT=5000
 
-CMD ["sh", "-c", "gunicorn -w 2 --threads 2 -k gthread --timeout 120 --graceful-timeout 120 -b 0.0.0.0:${PORT:-5000} app:app"]
+CMD ["sh", "-c", "gunicorn --workers ${WEB_CONCURRENCY:-1} --worker-class sync --timeout 120 --graceful-timeout 120 -b 0.0.0.0:${PORT:-5000} app:app"]

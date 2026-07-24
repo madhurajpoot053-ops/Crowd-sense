@@ -165,6 +165,8 @@ class VideoProcessor:
     
     def generate_frames(self):
         """Generator for video frames"""
+        blank_frame = cv2.imencode('.jpg', np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes()
+
         # Set up video source
         if self.cap is None:
             if self.using_webcam:
@@ -178,27 +180,33 @@ class VideoProcessor:
                 self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
                 if self.cap is None or not self.cap.isOpened():
                     yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + 
-                           cv2.imencode('.jpg', np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes() + 
-                           b'\r\n')
+                           b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
                     return
             else:
                 yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + 
-                       cv2.imencode('.jpg', np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes() + 
-                       b'\r\n')
+                       b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
                 return
         
         while True:
-            success, frame = self.cap.read()
+            try:
+                success, frame = self.cap.read()
+            except cv2.error:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
+                return
             
             # If end of video, loop back for uploaded videos
             if not success:
                 if not self.using_webcam and self.video_path:
-                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    success, frame = self.cap.read()
-                    if not success:
-                        break
+                    try:
+                        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        success, frame = self.cap.read()
+                        if not success:
+                            break
+                    except cv2.error:
+                        yield (b'--frame\r\n'
+                               b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
+                        return
                 else:
                     continue
             
@@ -206,7 +214,18 @@ class VideoProcessor:
             frame, _ = self.process_frame(frame)
             
             # Convert to JPEG
-            ret, buffer = cv2.imencode('.jpg', frame)
+            try:
+                ret, buffer = cv2.imencode('.jpg', frame)
+            except cv2.error:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
+                return
+
+            if not ret:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + blank_frame + b'\r\n')
+                continue
+
             frame_bytes = buffer.tobytes()
             
             yield (b'--frame\r\n'
