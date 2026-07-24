@@ -7,6 +7,19 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 const peopleCounter = document.getElementById('peopleCounter');
 const countDisplay = document.getElementById('countDisplay');
 const densityIndicator = document.getElementById('densityIndicator');
+const videoFeedImage = document.querySelector('img[alt="Video Feed"]');
+const heatmapFeedImage = document.querySelector('img[alt="Heatmap Feed"]');
+
+function refreshFeedImages() {
+    const stamp = Date.now();
+    if (videoFeedImage) {
+        videoFeedImage.src = `/video_feed?ts=${stamp}`;
+    }
+    if (heatmapFeedImage) {
+        heatmapFeedImage.src = `/heatmap_feed?ts=${stamp}`;
+    }
+}
+
 fileInput.addEventListener('change', function() {
     if (this.files.length > 0) {
         const fileName = this.files[0].name;
@@ -319,6 +332,8 @@ function updateChart(currentCount, predictedCount) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     setupCrowdChart();
+    refreshFeedImages();
     updatePeopleCount();
-    setInterval(updatePeopleCount, 1000); // Update every 5 seconds
+    setInterval(refreshFeedImages, 1000);
+    setInterval(updatePeopleCount, 1000);
 });

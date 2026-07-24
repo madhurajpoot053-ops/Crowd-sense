@@ -163,6 +163,47 @@ class VideoProcessor:
         
         return frame
     
+    def get_frame_snapshot(self):
+        """Return a single JPEG frame snapshot for browser refreshes."""
+        blank_frame = cv2.imencode('.jpg', np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes()
+
+        if self.cap is None:
+            if self.using_webcam:
+                self.cap = cv2.VideoCapture(Config.WEBCAM_INDEX)
+            elif self.video_path and os.path.isfile(self.video_path):
+                self.cap = cv2.VideoCapture(self.video_path)
+
+        if self.cap is None or not self.cap.isOpened():
+            return blank_frame
+
+        try:
+            success, frame = self.cap.read()
+        except cv2.error:
+            return blank_frame
+
+        if not success:
+            if not self.using_webcam and self.video_path:
+                try:
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    success, frame = self.cap.read()
+                except cv2.error:
+                    return blank_frame
+
+            if not success:
+                return blank_frame
+
+        frame, _ = self.process_frame(frame)
+
+        try:
+            ret, buffer = cv2.imencode('.jpg', frame)
+        except cv2.error:
+            return blank_frame
+
+        if not ret:
+            return blank_frame
+
+        return buffer.tobytes()
+
     def generate_frames(self):
         """Generator for video frames"""
         blank_frame = cv2.imencode('.jpg', np.zeros((480, 640, 3), dtype=np.uint8))[1].tobytes()
