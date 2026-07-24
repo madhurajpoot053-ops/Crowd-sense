@@ -111,35 +111,64 @@ class HeatmapGenerator:
         return heatmap
     
     def _apply_colormap(self, base_heatmap, height, width):
-        """Apply color gradient to heatmap"""
-        heatmap = np.zeros((height, width, 3), dtype=np.uint8)
-        heatmap[:, :] = (100, 0, 0)  # Dark blue background
-        
-        for y in range(height):
-            for x in range(width):
-                intensity = base_heatmap[y, x]
-                if intensity > 0.01:
-                    color = self._get_gradient_color(intensity)
-                    heatmap[y, x] = color
-        
+        """Apply color gradient to heatmap using vectorized NumPy operations."""
+        # BGR channels
+        b = np.zeros((height, width), dtype=np.float32)
+        g = np.zeros((height, width), dtype=np.float32)
+        r = np.zeros((height, width), dtype=np.float32)
+
+        v = base_heatmap  # alias for brevity
+        active = v > 0.01
+
+        # Band 1: Blue → Cyan  (0.00 – 0.25)
+        m1 = active & (v < 0.25)
+        t1 = v[m1] / 0.25
+        b[m1] = 255
+        g[m1] = 255 * t1
+        r[m1] = 0
+
+        # Band 2: Cyan → Green  (0.25 – 0.50)
+        m2 = active & (v >= 0.25) & (v < 0.50)
+        t2 = (v[m2] - 0.25) / 0.25
+        b[m2] = 255 * (1 - t2)
+        g[m2] = 255
+        r[m2] = 0
+
+        # Band 3: Green → Yellow  (0.50 – 0.75)
+        m3 = active & (v >= 0.50) & (v < 0.75)
+        t3 = (v[m3] - 0.50) / 0.25
+        b[m3] = 0
+        g[m3] = 255
+        r[m3] = 255 * t3
+
+        # Band 4: Yellow → Red  (0.75 – 1.00)
+        m4 = active & (v >= 0.75)
+        t4 = (v[m4] - 0.75) / 0.25
+        b[m4] = 0
+        g[m4] = 255 * (1 - t4)
+        r[m4] = 255
+
+        # Stack into BGR image; background pixels stay (0,0,0) then tinted below
+        heatmap = np.stack([b, g, r], axis=-1).astype(np.uint8)
+
+        # Dark-blue background for inactive pixels
+        bg_mask = ~active
+        heatmap[bg_mask] = (100, 0, 0)
+
         return heatmap
-    
+
     def _get_gradient_color(self, intensity):
-        """Get color for given intensity (BGR format)"""
+        """Get color for given intensity (BGR format) – used only for the legend."""
         if intensity < 0.25:
-            # Blue to Cyan
             g_value = int(255 * (intensity / 0.25))
             return (255, g_value, 0)
         elif intensity < 0.5:
-            # Cyan to Green
             b_value = int(255 - 255 * ((intensity - 0.25) / 0.25))
             return (b_value, 255, 0)
         elif intensity < 0.75:
-            # Green to Yellow
             r_value = int(255 * ((intensity - 0.5) / 0.25))
             return (0, 255, r_value)
         else:
-            # Yellow to Red
             g_value = int(255 - 255 * ((intensity - 0.75) / 0.25))
             return (0, g_value, 255)
     

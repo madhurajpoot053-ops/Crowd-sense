@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . ./
 RUN mkdir -p /app/uploads
 
-EXPOSE 5000
-ENV PORT=5000
+EXPOSE 10000
+ENV PORT=10000
 
-CMD ["sh", "-c", "gunicorn --workers ${WEB_CONCURRENCY:-1} --worker-class sync --timeout 120 --graceful-timeout 120 -b 0.0.0.0:${PORT:-5000} app:app"]
+CMD ["sh", "-c", "gunicorn --workers ${WEB_CONCURRENCY:-1} --worker-class gevent --worker-connections 100 --timeout 300 --graceful-timeout 30 -b 0.0.0.0:${PORT:-10000} app:app"]
