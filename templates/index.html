@@ -656,6 +656,11 @@
                     <i class="fas fa-stop-circle"></i> Stop Webcam
                 </button>
                 <span class="webcam-status" id="webcamStatus">Camera not started</span>
+                <div class="webcam-quality-control" style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
+                    <label for="qualitySlider" style="color:#aab; font-size:0.85rem;">Quality</label>
+                    <input type="range" id="qualitySlider" min="0.5" max="1" step="0.05" value="0.7" style="width:80px;">
+                    <span id="qualityValue" style="color:#aab; font-size:0.85rem;">0.7</span>
+                </div>
             </div>
             <!-- Hidden video for getUserMedia capture -->
             <video id="webcamVideo" autoplay muted playsinline></video>
@@ -1289,7 +1294,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let webcamStream = null;
     let webcamFrameLoop = null;
     let webcamRunning = false;
-    const WEBCAM_FPS = 5; // frames per second sent to server
+    const WEBCAM_FPS = 15; // frames per second sent to server
 
     async function startBrowserWebcam() {
         const statusEl = document.getElementById('webcamStatus');
@@ -1343,19 +1348,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const w = videoEl.videoWidth  || 640;
         const h = videoEl.videoHeight || 480;
+        // Use downscaled size for transmission
+        const sendW = SEND_WIDTH;
+        const sendH = SEND_HEIGHT;
 
-        // Size all canvases
-        [captureCanvas, rawCanvas, annotated].forEach(c => { c.width = w; c.height = h; });
+        // Size canvases: capture canvas uses downscaled size, others keep original
+        captureCanvas.width = sendW; captureCanvas.height = sendH;
+        rawCanvas.width = w; rawCanvas.height = h;
+        annotated.width = w; annotated.height = h;
 
-        // Draw raw frame
+        // Draw raw frame onto capture canvas (downscaled)
         const ctx = captureCanvas.getContext('2d');
-        ctx.drawImage(videoEl, 0, 0, w, h);
+        ctx.drawImage(videoEl, 0, 0, sendW, sendH);
 
         // Show raw preview
         rawCanvas.getContext('2d').drawImage(videoEl, 0, 0, w, h);
 
         // Convert to JPEG base64
-        const frameB64 = captureCanvas.toDataURL('image/jpeg', 0.7);
+        const frameB64 = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
 
         try {
             const resp = await fetch('/process_frame', {
@@ -1369,6 +1379,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.frame) {
                     // Draw annotated frame
                     const img = new Image();
+            // Update quality display when slider changes
+            const qualitySlider = document.getElementById('qualitySlider');
+            const qualityValue = document.getElementById('qualityValue');
+            qualitySlider.addEventListener('input', () => {
+                JPEG_QUALITY = parseFloat(qualitySlider.value);
+                qualityValue.textContent = JPEG_QUALITY.toFixed(2);
+            });
                     img.onload = () => annotated.getContext('2d').drawImage(img, 0, 0, w, h);
                     img.src = data.frame;
 
