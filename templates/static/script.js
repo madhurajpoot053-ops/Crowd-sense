@@ -152,7 +152,7 @@ function getNextMinutePrediction(currentCrowd) {
     // Log the payload being sent
     console.log('Sending prediction request with payload:', payload);
     
-    fetch("http://localhost:8000/predict", {
+    fetch("/predict", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

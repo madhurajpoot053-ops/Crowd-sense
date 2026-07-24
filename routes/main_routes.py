@@ -1,7 +1,7 @@
 """
 Main page routes
 """
-from flask import render_template, redirect, url_for, request
+from flask import render_template, redirect, url_for, request, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 from config import Config
@@ -20,6 +20,10 @@ def register_main_routes(app, video_processor):
     """
     
     @app.route('/')
+    def landing_page():
+        return send_from_directory(os.path.join(app.root_path, 'LandingPage'), 'index.html')
+    
+    @app.route('/dashboard')
     def home():
         return render_template('index.html', 
                              GRID_ROWS=Config.GRID_ROWS, 
@@ -29,24 +33,31 @@ def register_main_routes(app, video_processor):
     def upload_file():
         # Check if a file was submitted
         if 'video' not in request.files:
-            return redirect(request.url)
+            return redirect(url_for('home'), code=303)
         
         file = request.files['video']
         
         # If user submits empty form
         if file.filename == '':
-            return redirect(request.url)
+            return redirect(url_for('home'), code=303)
         
         # If valid file and allowed extension
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file_path = os.path.abspath(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
+            # Release current video capture before cleaning up old files
+            video_processor.cleanup()
             
             # Remove old uploaded files to save space
-            for old_file in os.listdir(app.config['UPLOAD_FOLDER']):
-                old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_file)
-                if os.path.isfile(old_path):
-                    os.unlink(old_path)
+            if os.path.exists(app.config['UPLOAD_FOLDER']):
+                for old_file in os.listdir(app.config['UPLOAD_FOLDER']):
+                    old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_file)
+                    if os.path.isfile(old_path):
+                        try:
+                            os.unlink(old_path)
+                        except Exception as e:
+                            print(f"Warning: could not delete old upload file {old_path}: {e}")
             
             # Save the new file
             file.save(file_path)
@@ -54,14 +65,12 @@ def register_main_routes(app, video_processor):
             # Set the video source
             video_processor.set_video_source(use_webcam=False, video_path=file_path)
             
-            return redirect(url_for('home'))
+            return redirect(url_for('home'), code=303)
         
-        return redirect(request.url)
+        return redirect(url_for('home'), code=303)
     
     @app.route('/use_webcam')
     def use_webcam():
-        # Switch to webcam mode only when enabled in config
-        if Config.ENABLE_WEBCAM:
-            video_processor.set_video_source(use_webcam=True)
-        
+        # Switch to webcam mode
+        video_processor.set_video_source(use_webcam=True)
         return redirect(url_for('home'))

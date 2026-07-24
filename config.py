@@ -50,7 +50,7 @@ class Config:
     
     # Video settings
     DEFAULT_VIDEO_PATH = None
-    ENABLE_WEBCAM = False
+    ENABLE_WEBCAM = True
     WEBCAM_INDEX = 0
     VIDEO_FPS = 30
     FRAME_DELAY = 0.03  # For uploaded videos (~30fps)

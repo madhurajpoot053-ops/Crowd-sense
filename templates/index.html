@@ -631,7 +631,7 @@
         // DOM Elements
         const fileInput = document.getElementById('videoFile');
 const selectedFile = document.getElementById('selectedFile');
-const fileButton = document.querySelector('.btn-primary');
+const fileButton = document.querySelector('.file-input-wrapper .btn-primary');
 const uploadForm = document.getElementById('uploadForm');
 const uploadButton = document.getElementById('uploadButton');
 const loadingIndicator = document.getElementById('loadingIndicator');
@@ -639,6 +639,18 @@ const peopleCounter = document.getElementById('peopleCounter');
 const countDisplay = document.getElementById('countDisplay');
 const densityIndicator = document.getElementById('densityIndicator');
 const alertMessage = document.getElementById('alertMessage');
+const videoFeedImage = document.querySelector('img[alt="Video Feed"]');
+const heatmapFeedImage = document.querySelector('img[alt="Heatmap Feed"]');
+
+function refreshFeedImages() {
+    const timestamp = Date.now();
+    if (videoFeedImage) {
+        videoFeedImage.src = `/video_feed?ts=${timestamp}`;
+    }
+    if (heatmapFeedImage) {
+        heatmapFeedImage.src = `/heatmap_feed?ts=${timestamp}`;
+    }
+}
 
 // File selection handler
 fileInput.addEventListener('change', function() {
@@ -894,7 +906,7 @@ function getNextMinutePrediction(currentCrowd) {
     // Log the payload being sent
     console.log('Sending prediction request with payload:', payload);
     
-    fetch("http://localhost:8000/predict", {
+    fetch("/predict", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

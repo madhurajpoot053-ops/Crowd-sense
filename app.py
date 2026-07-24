@@ -11,7 +11,7 @@ from routes.video_routes import register_video_routes
 from routes.api_routes import register_api_routes
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='LandingPage', static_url_path='/LandingPage')
 app.config.from_object(Config)
 
 # Create uploads directory if it doesn't exist

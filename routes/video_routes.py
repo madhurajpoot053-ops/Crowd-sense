@@ -4,6 +4,7 @@ Video feed routes
 from flask import Response
 import cv2
 import numpy as np
+import time
 
 def register_video_routes(app, video_processor, heatmap_generator, zone_manager):
     """
@@ -18,49 +19,40 @@ def register_video_routes(app, video_processor, heatmap_generator, zone_manager)
     
     @app.route('/video_feed')
     def video_feed():
-        frame_bytes = video_processor.get_frame_snapshot()
         return Response(
-            frame_bytes,
-            mimetype='image/jpeg',
-            headers={
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
+            video_processor.generate_frames(),
+            mimetype='multipart/x-mixed-replace; boundary=frame'
         )
     
     @app.route('/heatmap_feed')
     def heatmap_feed():
-        heatmap_bytes = generate_heatmap_snapshot()
         return Response(
-            heatmap_bytes,
-            mimetype='image/jpeg',
-            headers={
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
+            generate_heatmap_frames(),
+            mimetype='multipart/x-mixed-replace; boundary=frame'
         )
 
-    def generate_heatmap_snapshot():
-        """Return a single heatmap snapshot image."""
+    def generate_heatmap_frames():
+        """Generator for live heatmap frames."""
         blank_frame = cv2.imencode('.jpg', np.zeros((400, 400, 3), dtype=np.uint8))[1].tobytes()
 
-        if video_processor.cap is None or not video_processor.cap.isOpened():
-            return blank_frame
+        while True:
+            zones = zone_manager.get_zones()
+            total_people_count = video_processor.get_people_count()
+            recommendations = zone_manager.get_recommendations()
 
-        zones = zone_manager.get_zones()
-        total_people_count = video_processor.get_people_count()
-        recommendations = zone_manager.get_recommendations()
-        
-        heatmap = heatmap_generator.generate_heatmap_image(
-            zones,
-            total_people_count,
-            recommendations
-        )
-        
-        ret, buffer = cv2.imencode('.jpg', heatmap)
-        if not ret:
-            return blank_frame
+            heatmap = heatmap_generator.generate_heatmap_image(
+                zones,
+                total_people_count,
+                recommendations
+            )
 
-        return buffer.tobytes()
+            ret, buffer = cv2.imencode('.jpg', heatmap)
+            if ret:
+                frame_bytes = buffer.tobytes()
+            else:
+                frame_bytes = blank_frame
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
+            time.sleep(0.05)

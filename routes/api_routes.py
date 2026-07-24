@@ -59,3 +59,13 @@ def register_api_routes(app, video_processor, heatmap_generator, zone_manager):
             'success': True, 
             'zones': zone_manager.get_zones()
         })
+
+    @app.route('/predict', methods=['POST', 'GET'])
+    def predict():
+        """Return crowd density prediction as JSON"""
+        data = request.get_json(silent=True) or {}
+        current_crowd = data.get('current_crowd', video_processor.get_people_count())
+        predicted_count = max(0, int(current_crowd * 1.05))
+        return jsonify({
+            'next_minute_prediction': predicted_count
+        })
