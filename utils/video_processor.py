@@ -25,8 +25,9 @@ class VideoProcessor:
         self.video_path = Config.DEFAULT_VIDEO_PATH if Config.DEFAULT_VIDEO_PATH and os.path.isfile(Config.DEFAULT_VIDEO_PATH) else None
         self.cap = None
         self.total_people_count = 0
-        self.last_update_time = time.time()
-    
+        self.last_update_time = 0
+        self.last_person_detections = []
+
     def set_video_source(self, use_webcam=True, video_path=None):
         """
         Set video source (webcam or file)
@@ -65,44 +66,36 @@ class VideoProcessor:
             people_count: Number of people detected
         """
         height, width, _ = frame.shape
-        
         current_time = time.time()
-        if current_time - self.last_update_time > 0.1:
-            # Reset counts
+        
+        # Run heavy YOLO detection every 120ms to keep CPU load low on cloud hosts like Render
+        if current_time - self.last_update_time > 0.12 or not self.last_person_detections:
             self.heatmap_generator.reset_grid()
             self.zone_manager.reset_counts()
             
-            # Detect objects
-            results = self.detector.detect(frame)
-            person_detections = self.detector.get_person_detections(results)
+            # Detect objects with 320px CPU optimized size
+            results = self.detector.detect(frame, imgsz=320)
+            self.last_person_detections = self.detector.get_person_detections(results)
+            self.total_people_count = len(self.last_person_detections)
             
-            # Update people count
-            self.total_people_count = len(person_detections)
-            
-            # Process each detected person
-            for i, detection in enumerate(person_detections):
-                bbox = detection['bbox']
+            # Process each detected person into zones and heatmap
+            for detection in self.last_person_detections:
                 cx, cy = detection['center']
-                
-                # Add to zone
                 self.zone_manager.add_person_to_zone(cx, cy, width, height)
-                
-                # Add to heatmap grid
                 self.heatmap_generator.add_person_to_grid(cx, cy, height, width)
-                
-                # Draw on frame
-                cv2.circle(frame, (cx, cy), 4, (0, 0, 255), -1)
-                cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
-                cv2.putText(frame, f"Person {i+1}", (bbox[0], bbox[1] - 10), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
-            # Calculate zone densities
             self.zone_manager.calculate_densities()
-            
-            # Update smoothed grid
             self.heatmap_generator.update_smoothed_grid()
-            
             self.last_update_time = current_time
+
+        # Draw bounding boxes (from fresh or cached detections) on EVERY frame
+        for i, detection in enumerate(self.last_person_detections):
+            bbox = detection['bbox']
+            cx, cy = detection['center']
+            cv2.circle(frame, (cx, cy), 4, (0, 0, 255), -1)
+            cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+            cv2.putText(frame, f"Person {i+1}", (bbox[0], max(15, bbox[1] - 10)), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         
         # Add annotations to frame
         frame = self._add_annotations(frame, width, height)
@@ -274,12 +267,9 @@ class VideoProcessor:
 
             frame_bytes = buffer.tobytes()
             
+            # Yield frame immediately without artificial sleep to maximize FPS on cloud host
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            
-            # Add delay for uploaded videos
-            if not self.using_webcam:
-                time.sleep(Config.FRAME_DELAY)
     
     def get_people_count(self):
         """Get current people count"""

@@ -12,17 +12,18 @@ class YOLODetector:
         self.model = YOLO(model_path)
         self.person_class_id = Config.PERSON_CLASS_ID
     
-    def detect(self, frame):
+    def detect(self, frame, imgsz=320):
         """
-        Detect objects in the frame
+        Detect objects in the frame with optimized CPU image size
         
         Args:
             frame: Input frame (numpy array)
+            imgsz: Target image size for inference (default 320 for high CPU speed)
             
         Returns:
             results: YOLO detection results
         """
-        return self.model(frame)
+        return self.model(frame, imgsz=imgsz, verbose=False)
     
     def get_person_detections(self, results):
         """
