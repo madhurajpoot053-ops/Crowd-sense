@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crowd Density Monitor</title>
+    <title>CrowdSense — Advanced Crowd Density & Surge Monitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         
         :root {
-            --primary-dark: #0d1c3b;
-            --primary-light: #1a365d;
-            --accent-blue: #3498db;
-            --accent-green: #2ecc71;
-            --accent-yellow: #f39c12;
-            --accent-red: #e74c3c;
-            --text-light: #f8f9fa;
-            --text-dark: #2c3e50;
-            --card-bg: rgba(255, 255, 255, 0.9);
-            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            --bg-dark: #0b0f19;
+            --bg-card: #151c2e;
+            --bg-card-hover: #1e293b;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-cyan: #38bdf8;
+            --primary-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
             --transition-speed: 0.3s;
         }
         
@@ -28,1283 +32,997 @@
         }
         
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
-            color: var(--text-light);
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 2rem;
-            line-height: 1.6;
+            padding: 1.5rem;
+            line-height: 1.5;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
         }
         
         .page-container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
         }
         
-        h1 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            font-weight: 600;
-            background: linear-gradient(to right, #74ebd5, #ACB6E5);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 5px 10px rgba(0,0,0,0.1);
-            animation: fadeIn 1s ease-in-out;
-        }
-        
-        h3 {
-            color: var(--text-dark);
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-        
-        .card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: var(--card-shadow);
-            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-            margin-bottom: 2rem;
-            animation: slideUp 0.5s ease-out;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .source-controls {
+        /* Top Navigation Header */
+        .app-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            background: linear-gradient(to right, #4b6cb7, #182848);
-            border-radius: 15px;
-            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-blue));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: white;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+        
+        .brand-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .header-badges {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .badge-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-muted);
+        }
+        
+        .badge-pill.active {
+            border-color: rgba(34, 197, 94, 0.4);
+            color: var(--accent-green);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .badge-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* Unified Source & Camera Control Bar */
+        .controls-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
             box-shadow: var(--card-shadow);
-            margin-bottom: 2rem;
-            animation: fadeIn 0.8s ease-in-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
         
         .upload-form {
             display: flex;
-            flex-wrap: wrap;
             align-items: center;
-            gap: 1rem;
-            flex: 1;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
         
         .file-input-wrapper {
             position: relative;
             overflow: hidden;
-            display: inline-block;
-            flex: 1;
-            min-width: 250px;
         }
         
         .file-input-wrapper input[type=file] {
-            font-size: 100px;
             position: absolute;
             left: 0;
             top: 0;
             opacity: 0;
+            width: 100%;
+            height: 100%;
             cursor: pointer;
         }
         
         .btn {
-            padding: 0.8rem 1.5rem;
+            padding: 0.6rem 1.2rem;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
             transition: all var(--transition-speed);
-            font-family: 'Poppins', sans-serif;
-            display: flex;
+            font-family: 'Outfit', sans-serif;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
         }
         
-        .btn i {
-            font-size: 1.2rem;
-        }
-        
         .btn-primary {
-            background: linear-gradient(to right, #4776E6, #8E54E9);
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
-            box-shadow: 0 4px 15px rgba(71, 118, 230, 0.4);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
-        
         .btn-primary:hover {
-            box-shadow: 0 6px 20px rgba(71, 118, 230, 0.6);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
         }
         
         .btn-success {
-            background: linear-gradient(to right, #11998e, #38ef7d);
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-        
         .btn-success:hover {
-            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
         }
-        
+
+        .btn-webcam {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+        .btn-webcam:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5);
+        }
+
         .btn-danger {
-            background: linear-gradient(to right, #f5576c, #f093fb);
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
-            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
-        
         .btn-danger:hover {
-            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
         }
         
-        .loading {
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .webcam-settings {
             display: none;
-            gap: 0.5rem;
             align-items: center;
-            color: var(--text-light);
-            font-weight: 500;
-            animation: pulse 1.5s infinite;
-        }
-        
-        .selected-file {
-            margin-left: 1rem;
-            color: var(--text-light);
-            font-style: italic;
-        }
-        
-        .file-name {
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        
-        .feeds-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .feed-content {
-            position: relative;
+            gap: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.4rem 0.8rem;
             border-radius: 10px;
-            overflow: hidden;
-            height: 350px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
         }
-        
-        .feed-content img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 10px;
-            transition: transform 0.5s ease;
-        }
-        
-        .feed-content:hover img {
-            transform: scale(1.02);
-        }
-        
-        .feed-title {
-            color: var(--text-dark);
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-            text-align: center;
-            position: relative;
-            padding-bottom: 0.5rem;
-        }
-        
-        .feed-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(to right, var(--accent-blue), var(--accent-green));
-            border-radius: 3px;
-        }
-        
-        .people-counter {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            font-weight: 600;
-            text-align: center;
-            min-width: 180px;
-            z-index: 10;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            transition: all var(--transition-speed);
-        }
-        
-        .people-counter.low {
-            background: linear-gradient(to right, rgba(46, 204, 113, 0.8), rgba(26, 188, 156, 0.8));
-        }
-        
-        .people-counter.medium {
-            background: linear-gradient(to right, rgba(241, 196, 15, 0.8), rgba(243, 156, 18, 0.8));
-        }
-        
-        .people-counter.high {
-            background: linear-gradient(to right, rgba(231, 76, 60, 0.8), rgba(192, 57, 43, 0.8));
-        }
-        
-        #densityIndicator {
-            margin-top: 0.3rem;
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-        
-        .info-section {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: var(--card-shadow);
-            color: var(--text-dark);
-            margin-bottom: 2rem;
-            transition: transform var(--transition-speed);
-            animation: slideUp 0.6s ease-out;
-        }
-        
-        .info-section:hover {
-            transform: translateY(-5px);
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-        
-        .info-card {
-            background: linear-gradient(to bottom right, #f5f7fa, #c3cfe2);
-            border-radius: 10px;
-            padding: 1.2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-        
-        .info-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .info-card h4 {
-            color: var(--primary-light);
-            margin-bottom: 0.8rem;
-            font-weight: 600;
+        .webcam-settings.visible {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
-        
-        .info-card p {
-            font-size: 0.95rem;
-            color: #5d6778;
+
+        .control-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
-        
-        .graph-container {
-            width: 100%;
-            height: 400px;
-            background-color: white;
-            border-radius: 10px;
-            padding: 1.2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            margin-top: 1.5rem;
+
+        .select-dark, .range-input {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            outline: none;
         }
-        
-        .zones-info {
+
+        /* Feeds Container Grid */
+        .feeds-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
             margin-bottom: 1.5rem;
         }
         
-        .zone-card {
-            background: linear-gradient(to bottom right, #fff, #f0f2f5);
-            border-radius: 10px;
-            padding: 1.2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-            border-left: 5px solid #3498db;
-        }
-        
-        .zone-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .zone-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            color: var(--text-dark);
-        }
-        
-        .zone-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-right: 10px;
-            display: inline-block;
-        }
-        
-        .zone-details {
-            font-size: 0.95rem;
-            margin-bottom: 0.5rem;
-            color: #5d6778;
-        }
-        
-        .recommendations {
-            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-            border-left: 5px solid var(--accent-red);
-            color: var(--text-dark);
+        .feed-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
             box-shadow: var(--card-shadow);
-            animation: slideUp 0.7s ease-out;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
         
-        .recommendations h3 {
-            margin-top: 0;
-            color: var(--text-dark);
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .feed-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
-        .recommendations ul {
-            margin: 1rem 0 0;
-            padding-left: 1.5rem;
+
+        .feed-title i {
+            color: var(--primary-cyan);
         }
-        
-        .recommendations li {
-            margin-bottom: 0.5rem;
+
+        .feed-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-fov {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary-cyan);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .btn-fov:hover {
+            background: rgba(56, 189, 248, 0.25);
+            border-color: var(--primary-cyan);
+        }
+
+        .feed-display-wrap {
             position: relative;
+            width: 100%;
+            height: 380px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
         }
-        
-        .recommendations li::before {
-            content: '●';
-            color: var(--accent-red);
+
+        .feed-display-wrap img, .feed-display-wrap canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Overlay Counter Badge on Feed */
+        .feed-counter-overlay {
             position: absolute;
-            left: -1.2rem;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.4rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 5;
         }
-        
-        .density-high {
-            color: var(--accent-red);
+
+        .counter-metric {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
             font-weight: 600;
+            font-size: 0.95rem;
         }
-        
-        .density-medium {
-            color: var(--accent-yellow);
-            font-weight: 600;
+
+        .density-pill {
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .density-low {
-            color: var(--accent-green);
-            font-weight: 600;
+        .density-pill.low { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+        .density-pill.medium { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.4); }
+        .density-pill.high { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+        /* Real-time Predictive Analytics Bar */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
         }
-        
-        .alert-message {
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.1rem 1.3rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-cyan);
+        }
+        .stat-card.risk-high::before { background: var(--accent-red); }
+        .stat-card.trend-up::before { background: var(--accent-yellow); }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-sub {
+            font-size: 0.8rem;
+            margin-top: 0.2rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .progress-bar-wrap {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 0.6rem;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, var(--primary-cyan), var(--primary-blue));
+            transition: width 0.5s ease;
+        }
+        .progress-bar-fill.high { background: linear-gradient(to right, var(--accent-yellow), var(--accent-red)); }
+
+        /* Chart & Details Split */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        .zones-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .zones-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .zone-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .zone-info-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .zone-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .recommendations-card {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .recommendations-card h3 {
+            color: #f87171;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .recommendations-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .recommendations-card li {
+            padding: 0.4rem 0;
+            color: #fca5a5;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Fullscreen FOV Overlay Modal */
+        .fov-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 8, 15, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .fov-modal.active {
+            display: flex;
+        }
+
+        .fov-modal-header {
+            position: absolute;
+            top: 1.5rem;
+            left: 2rem;
+            right: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .fov-hud-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .fov-close-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .fov-close-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        .fov-display-container {
+            position: relative;
+            max-width: 90vw;
+            max-height: 80vh;
+            width: 1200px;
+            height: 700px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.15);
+            background: #000;
+        }
+
+        .fov-display-container img, .fov-display-container canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Reticle & Crosshair HUD Elements */
+        .fov-hud-reticle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 1px dashed rgba(56, 189, 248, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .fov-hud-reticle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -15px;
+            width: 130px;
+            height: 1px;
+            background: rgba(56, 189, 248, 0.2);
+        }
+        .fov-hud-reticle::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: -15px;
+            height: 130px;
+            width: 1px;
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        /* Smart Notification Toast System */
+        .toast-container {
             position: fixed;
             top: 1.5rem;
             right: 1.5rem;
-            background: linear-gradient(to right, var(--accent-red), #c0392b);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
-            animation: slideInRight 0.3s ease-out;
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-            from { 
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-        
-        /* Loading spinner */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Responsiveness */
-        @media (max-width: 992px) {
-            .feeds-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-            
-            .source-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .upload-form {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .file-input-wrapper {
-                width: 100%;
-            }
-            
-            .btn {
-                width: 100%;
-            }
-            
-            .selected-file {
-                margin-left: 0;
-                margin-top: 0.5rem;
-                width: 100%;
-                text-align: center;
-            }
-        }
-        #webcam {
-            text-decoration: none;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 380px;
         }
 
-        /* Browser Webcam Styles */
-        .webcam-section {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--card-shadow);
-            animation: fadeIn 0.8s ease-in-out;
-            border: 1px solid rgba(255,255,255,0.08);
+        .toast-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-cyan);
+            border-radius: 12px;
+            padding: 0.9rem 1.2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease-out;
         }
-        .webcam-title {
-            font-size: 1.1rem;
+        .toast-item.alert-danger { border-left-color: var(--accent-red); }
+        .toast-item.alert-warning { border-left-color: var(--accent-yellow); }
+
+        .toast-content h4 {
+            font-size: 0.9rem;
             font-weight: 600;
-            color: #74ebd5;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin-bottom: 0.2rem;
         }
-        .webcam-controls {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .btn-webcam {
-            background: linear-gradient(to right, #00b4db, #0083b0);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,180,219,0.4);
-        }
-        .btn-webcam:hover {
-            box-shadow: 0 6px 20px rgba(0,180,219,0.6);
-            transform: translateY(-2px);
-        }
-        .btn-stop-webcam {
-            background: linear-gradient(to right, #f5576c, #f093fb);
-            color: white;
-            display: none;
-        }
-        .webcam-status {
-            font-size: 0.85rem;
-            padding: 0.4rem 0.9rem;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.1);
-            color: #aab;
-        }
-        .webcam-status.active {
-            background: rgba(46,204,113,0.2);
-            color: #2ecc71;
-        }
-        .webcam-status.error {
-            background: rgba(231,76,60,0.2);
-            color: #e74c3c;
-        }
-        .webcam-feeds {
-            display: none;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .webcam-feeds.visible {
-            display: grid;
-        }
-        .webcam-feed-label {
+        .toast-content p {
             font-size: 0.8rem;
-            color: #aab;
-            text-align: center;
-            margin-bottom: 0.4rem;
+            color: var(--text-muted);
         }
-        .webcam-canvas-wrap {
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            background: #000;
-        }
-        #webcamVideo, #webcamCanvas, #annotatedCanvas {
-            width: 100%;
-            border-radius: 10px;
-            display: block;
-        }
-        #webcamVideo { display: none; }
-        #annotatedCanvas { background: #111; }
-        @media (max-width: 600px) {
-            .webcam-feeds { grid-template-columns: 1fr; }
-        }
-    </style>
 
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+
+        /* Hidden media element for webcam capture */
+        #hiddenWebcamVideo { display: none; }
+        #hiddenCaptureCanvas { display: none; }
+    </style>
 </head>
 <body>
     <div class="page-container">
-        <h1>Crowd Density Monitor</h1>
-        
-        <div class="source-controls">
-            <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
-                <div class="file-input-wrapper">
-                    <button class="btn btn-primary" type="button">
-                        <i class="fas fa-file-video"></i> Choose Video File
+        <!-- Top App Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon"><i class="fas fa-radar"></i></div>
+                <div class="brand-text">
+                    <h1>CrowdSense AI</h1>
+                    <p>Real-Time Crowd Density & Forecast Monitor</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <div class="badge-pill active">
+                    <div class="badge-pulse"></div> YOLOv8 Neural Detection
+                </div>
+                <div class="badge-pill" id="systemFpsBadge">
+                    <i class="fas fa-bolt"></i> <span id="fpsCounterVal">-- FPS</span>
+                </div>
+                <button class="btn btn-outline" id="audioToggleBtn" onclick="toggleAudioAlerts()" style="padding:0.4rem 0.8rem; font-size:0.8rem;">
+                    <i class="fas fa-volume-up" id="audioIcon"></i> Sound Alerts: ON
+                </button>
+            </div>
+        </header>
+
+        <!-- Unified Controls Card -->
+        <div class="controls-card">
+            <div class="control-group">
+                <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-primary" type="button">
+                            <i class="fas fa-file-video"></i> Choose Video
+                        </button>
+                        <input type="file" name="video" id="videoFile" accept=".mp4,.avi,.mov,.mkv,.webm">
+                    </div>
+                    <button type="submit" class="btn btn-success" id="uploadButton">
+                        <i class="fas fa-cloud-upload-alt"></i> Process File
                     </button>
-                    <input type="file" name="video" id="videoFile" accept=".mp4,.avi,.mov,.mkv,.webm">
-                </div>
-                <button type="submit" class="btn btn-success" id="uploadButton">
-                    <i class="fas fa-cloud-upload-alt"></i> Upload & Process
-                </button>
-                <div class="loading" id="loadingIndicator">
-                    <div class="spinner"></div> Processing...
-                </div>
-                <div class="selected-file" id="selectedFile"></div>
-            </form>
-            <a href="/use_webcam" id="webcam" style="display:none;">
-                <button class="btn btn-danger">
-                    <i class="fas fa-camera"></i> Use Server Webcam
-                </button>
-            </a>
-        </div>
+                    <span id="selectedFileName" style="font-size:0.85rem; color:var(--text-muted); font-style:italic;"></span>
+                </form>
 
-        <!-- Browser Webcam Section -->
-        <div class="webcam-section" id="webcamSection">
-            <div class="webcam-title"><i class="fas fa-camera"></i> Browser Webcam (Live Detection)</div>
-            <div class="webcam-controls">
+                <div style="height: 24px; width: 1px; background: var(--border-color);"></div>
+
+                <!-- Browser Webcam Start / Stop Controls -->
                 <button class="btn btn-webcam" id="startWebcamBtn" onclick="startBrowserWebcam()">
-                    <i class="fas fa-video"></i> Start Webcam
+                    <i class="fas fa-video"></i> Start Browser Camera
                 </button>
-                <button class="btn btn-danger btn-stop-webcam" id="stopWebcamBtn" onclick="stopBrowserWebcam()">
-                    <i class="fas fa-stop-circle"></i> Stop Webcam
+                <button class="btn btn-danger" id="stopWebcamBtn" onclick="stopBrowserWebcam()" style="display:none;">
+                    <i class="fas fa-stop-circle"></i> Stop Camera
                 </button>
-                <span class="webcam-status" id="webcamStatus">Camera not started</span>
-                <div class="webcam-quality-control" style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
-                    <label for="qualitySlider" style="color:#aab; font-size:0.85rem;">Quality</label>
-                    <input type="range" id="qualitySlider" min="0.5" max="1" step="0.05" value="0.7" style="width:80px;">
-                    <span id="qualityValue" style="color:#aab; font-size:0.85rem;">0.7</span>
-                </div>
             </div>
-            <!-- Hidden video for getUserMedia capture -->
-            <video id="webcamVideo" autoplay muted playsinline></video>
-            <!-- Canvas to capture frames (hidden) -->
-            <canvas id="webcamCanvas" style="display:none;"></canvas>
-            <!-- Display feeds -->
-            <div class="webcam-feeds" id="webcamFeeds">
-                <div>
-                    <div class="webcam-feed-label">📷 Raw Camera</div>
-                    <div class="webcam-canvas-wrap">
-                        <canvas id="rawPreviewCanvas"></canvas>
-                    </div>
-                </div>
-                <div>
-                    <div class="webcam-feed-label">🤖 YOLO Detection</div>
-                    <div class="webcam-canvas-wrap">
-                        <canvas id="annotatedCanvas"></canvas>
-                    </div>
-                </div>
+
+            <!-- Webcam Speed & Quality Dropdown Settings -->
+            <div class="webcam-settings" id="webcamSettings">
+                <span class="control-label">Target FPS:</span>
+                <select id="fpsSelect" class="select-dark" onchange="updateWebcamSettings()">
+                    <option value="10">10 FPS</option>
+                    <option value="15" selected>15 FPS</option>
+                    <option value="24">24 FPS</option>
+                    <option value="30">30 FPS</option>
+                </select>
+
+                <span class="control-label" style="margin-left:0.5rem;">Quality:</span>
+                <input type="range" id="qualitySlider" class="range-input" min="0.5" max="1" step="0.05" value="0.75" style="width:70px;" oninput="updateWebcamSettings()">
+                <span id="qualityValText" class="control-label">0.75</span>
             </div>
         </div>
-        
-        <div class="feeds-container">
-            <div class="card">
-                <h3 class="feed-title">Live Person Detection</h3>
-                <div class="feed-content">
-                    <img src="{{ url_for('video_feed') }}" alt="Video Feed">
-                    <div class="people-counter low" id="peopleCounter">
-                        <div id="countDisplay"><i class="fas fa-users"></i> People: 0</div>
-                        <div id="densityIndicator">Low Density</div>
+
+        <!-- Hidden elements for browser webcam processing -->
+        <video id="hiddenWebcamVideo" autoplay muted playsinline></video>
+        <canvas id="hiddenCaptureCanvas"></canvas>
+
+        <!-- Dedicated Feeds Container -->
+        <div class="feeds-grid">
+            <!-- Card 1: Live Person Detection -->
+            <div class="feed-card" id="liveFeedCard">
+                <div class="feed-header">
+                    <div class="feed-title">
+                        <i class="fas fa-eye"></i> Live Person Detection
+                    </div>
+                    <div class="feed-actions">
+                        <button class="btn-fov" onclick="openFovModal('video')">
+                            <i class="fas fa-expand"></i> Fullscreen FOV
+                        </button>
+                    </div>
+                </div>
+                <div class="feed-display-wrap">
+                    <!-- Standard video feed image / webcam fallback -->
+                    <img id="videoFeedImg" src="{{ url_for('video_feed') }}" alt="Live Detection Stream">
+                    <div class="feed-counter-overlay">
+                        <div class="counter-metric">
+                            <i class="fas fa-users" style="color:var(--primary-cyan);"></i>
+                            <span id="livePeopleCount">0</span> People
+                        </div>
+                        <div class="density-pill low" id="liveDensityPill">LOW</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="card">
-                <h3 class="feed-title">Density Heatmap</h3>
-                <div class="feed-content">
-                    <img src="{{ url_for('heatmap_feed') }}" alt="Heatmap Feed">
+
+            <!-- Card 2: Density Heatmap -->
+            <div class="feed-card" id="heatmapFeedCard">
+                <div class="feed-header">
+                    <div class="feed-title">
+                        <i class="fas fa-fire-alt" style="color:#f97316;"></i> Real-Time Density Heatmap
+                    </div>
+                    <div class="feed-actions">
+                        <button class="btn-fov" onclick="openFovModal('heatmap')">
+                            <i class="fas fa-expand"></i> Fullscreen FOV
+                        </button>
+                    </div>
+                </div>
+                <div class="feed-display-wrap">
+                    <img id="heatmapFeedImg" src="{{ url_for('heatmap_feed') }}" alt="Density Heatmap Stream">
                 </div>
             </div>
         </div>
 
-        <div class="card" id="zone-info-container">
-            <h3><i class="fas fa-map-marker-alt"></i> Zone Information</h3>
-            <div class="zones-info" id="zones-info">
-                <!-- Zone cards will be populated here dynamically -->
+        <!-- Predictive Analytics & Capacity Bar -->
+        <div class="analytics-grid">
+            <div class="stat-card" id="capacityStatCard">
+                <div class="stat-header">
+                    <span>CROWD CAPACITY</span>
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-value" id="capacityValue">0%</div>
+                <div class="stat-sub">
+                    <span id="occupancyText">0 people detected</span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="capacityBarFill"></div>
+                </div>
+            </div>
+
+            <div class="stat-card" id="trendStatCard">
+                <div class="stat-header">
+                    <span>FLOW VELOCITY</span>
+                    <i class="fas fa-arrow-trend-up"></i>
+                </div>
+                <div class="stat-value" id="flowVelocityVal">0.0 /m</div>
+                <div class="stat-sub" id="trendStatusText">
+                    <i class="fas fa-minus"></i> Flow is Stable
+                </div>
+            </div>
+
+            <div class="stat-card" id="forecastStatCard">
+                <div class="stat-header">
+                    <span>1-MIN FORECAST</span>
+                    <i class="fas fa-crystal-ball"></i>
+                </div>
+                <div class="stat-value" id="forecastVal">0</div>
+                <div class="stat-sub">
+                    <span>Confidence: <strong id="confidenceVal">95%</strong></span>
+                </div>
+            </div>
+
+            <div class="stat-card" id="riskStatCard">
+                <div class="stat-header">
+                    <span>RISK STATUS</span>
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div class="stat-value" id="riskLevelVal" style="color:var(--accent-green);">Normal</div>
+                <div class="stat-sub">Automated Safety Engine</div>
             </div>
         </div>
-        
-        <div class="recommendations" id="recommendations">
-            <h3><i class="fas fa-exclamation-triangle"></i> Movement Recommendations</h3>
-            <ul id="recommendation-list">
-                <!-- Recommendations will be populated here dynamically -->
+
+        <!-- Chart & Zones Split Container -->
+        <div class="details-grid">
+            <div class="chart-card">
+                <div class="feed-header">
+                    <div class="feed-title">
+                        <i class="fas fa-chart-line"></i> Live & Predicted Crowd Density Trend
+                    </div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="crowdTrendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="zones-card">
+                <div class="feed-header">
+                    <div class="feed-title">
+                        <i class="fas fa-border-all"></i> Zone Breakdown
+                    </div>
+                </div>
+                <div class="zones-list" id="zonesListContainer">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Movement Recommendations -->
+        <div class="recommendations-card" id="recommendationsContainer">
+            <h3><i class="fas fa-triangle-exclamation"></i> Safety & Flow Recommendations</h3>
+            <ul id="recommendationList">
+                <li><i class="fas fa-check-circle"></i> Crowd levels optimal across all monitoring zones.</li>
             </ul>
         </div>
-        
-        <div class="info-section">
-            <h3><i class="fas fa-chart-line"></i> Crowd Density Trends</h3>
-            <div class="graph-container">
-                <canvas id="crowdTrendChart"></canvas>
+    </div>
+
+    <!-- Fullscreen FOV Overlay Modal -->
+    <div class="fov-modal" id="fovModal">
+        <div class="fov-modal-header">
+            <div class="fov-hud-title">
+                <i class="fas fa-crosshairs"></i> <span id="fovHudTitleText">FIELD OF VIEW — LIVE DETECTOR</span>
             </div>
-            <div class="info-card" style="margin-top: 1.5rem;">
-                <h4><i class="fas fa-chart-pie"></i> Predicted Count (Next Min)</h4>
-                <div id="predictionDisplay">Waiting for prediction...</div>
-            </div>
+            <button class="fov-close-btn" onclick="closeFovModal()">
+                <i class="fas fa-times"></i> Exit FOV Mode (Esc)
+            </button>
         </div>
-        
-        <div class="info-section">
-            <h3><i class="fas fa-info-circle"></i> System Information</h3>
-            <div class="info-grid">
-                <div class="info-card">
-                    <h4><i class="fas fa-cogs"></i> How It Works</h4>
-                    <p>This system uses YOLOv8 to detect people in real-time from your webcam or uploaded video. The smooth gradient heatmap shows crowd density using weather map-style visualization, transitioning from blue (low) to red (high density).</p>
-                </div>
-                <div class="info-card">
-                    <h4><i class="fas fa-users"></i> Crowd Monitoring</h4>
-                    <p>The color of the people counter changes based on crowd density: green for low density, yellow/orange for medium, and red for high density areas. This provides an instant visual indication of crowd levels.</p>
-                </div>
-                <div class="info-card">
-                    <h4><i class="fas fa-file-video"></i> Supported Video Formats</h4>
-                    <p>You can upload .mp4, .avi, .mov, .mkv and .webm video files (max 100MB). The system will analyze the video and display both person detection results and the activity heatmap.</p>
-                </div>
-            </div>
+        <div class="fov-display-container">
+            <img id="fovModalImg" src="" alt="FOV Expanded View">
+            <div class="fov-hud-reticle"></div>
         </div>
     </div>
 
-    <div class="alert-message" id="alertMessage">
-        <i class="fas fa-exclamation-circle"></i> Alert: High density detected!
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script>
-        // DOM Elements
-        const fileInput = document.getElementById('videoFile');
-const selectedFile = document.getElementById('selectedFile');
-const fileButton = document.querySelector('.file-input-wrapper .btn-primary');
-const uploadForm = document.getElementById('uploadForm');
-const uploadButton = document.getElementById('uploadButton');
-const loadingIndicator = document.getElementById('loadingIndicator');
-const peopleCounter = document.getElementById('peopleCounter');
-const countDisplay = document.getElementById('countDisplay');
-const densityIndicator = document.getElementById('densityIndicator');
-const alertMessage = document.getElementById('alertMessage');
-const videoFeedImage = document.querySelector('img[alt="Video Feed"]');
-const heatmapFeedImage = document.querySelector('img[alt="Heatmap Feed"]');
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
-function refreshFeedImages() {
-    const timestamp = Date.now();
-    if (videoFeedImage) {
-        videoFeedImage.src = `/video_feed?ts=${timestamp}`;
-    }
-    if (heatmapFeedImage) {
-        heatmapFeedImage.src = `/heatmap_feed?ts=${timestamp}`;
-    }
-}
-
-// File selection handler
-fileInput.addEventListener('change', function() {
-    if (this.files.length > 0) {
-        const fileName = this.files[0].name;
-        fileButton.innerHTML = '<i class="fas fa-check"></i> File Selected';
-        selectedFile.innerHTML = '<span class="file-name">' + fileName + '</span>';
-    } else {
-        fileButton.innerHTML = '<i class="fas fa-file-video"></i> Choose Video File';
-        selectedFile.textContent = '';
-    }
-});
-
-// Form submission handler
-uploadForm.addEventListener('submit', function() {
-    uploadButton.disabled = true;
-    loadingIndicator.style.display = 'flex';
-});
-
-// Alert threshold
-const alertThreshold = 33;
-
-// Variables to track alert state
-// ADDED: This variable helps prevent duplicate alerts
-let isAlertShowing = false;
-
-// Show alert with auto-dismiss - centered positioning
-// MODIFIED: Simplified alert system
-function showAlert(message) {
-    // Only show alert if it's not already showing
-    if (!isAlertShowing) {
-        // Use innerHTML instead of textContent to support HTML elements
-        alertMessage.innerHTML = message;
-        alertMessage.style.display = 'block';
-        alertMessage.style.position = 'fixed';
-        alertMessage.style.top = '20px'; // Position at top with some padding
-        alertMessage.style.left = '50%';
-        alertMessage.style.transform = 'translateX(-50%)'; // Center horizontally only
-        alertMessage.style.zIndex = '1000';
-        
-        // Add some basic styles if not already in CSS
-        alertMessage.style.backgroundColor = '#f44336';
-        alertMessage.style.color = 'white';
-        alertMessage.style.padding = '15px 20px';
-        alertMessage.style.borderRadius = '5px';
-        alertMessage.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-        
-        isAlertShowing = true;
-    }
-}
-
-// Hide alert
-// MODIFIED: Update alert state tracking
-function hideAlert() {
-    if (isAlertShowing) {
-        alertMessage.style.display = 'none';
-        isAlertShowing = false;
-    }
-}
-
-// Update people count and fetch prediction
-function updatePeopleCount() {
-    fetch('/heatmap_data')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            const currentCount = data.people_count;
-            
-            // Log heatmap data for debugging
-            console.log('Heatmap data received:', data);
-            
-            // Update the count display
-            countDisplay.innerHTML = `<i class="fas fa-users"></i> People: ${currentCount}`;
-            
-            // Update density text and styling
-            let densityText = "Low Density";
-            peopleCounter.classList.remove('low', 'medium', 'high');
-            
-            switch(data.density_level) {
-                case 'low':
-                    densityText = "Low Density";
-                    peopleCounter.classList.add('low');
-                    break;
-                case 'medium':
-                    densityText = "Medium Density";
-                    peopleCounter.classList.add('medium');
-                    break;
-                case 'high':
-                    densityText = "High Density";
-                    peopleCounter.classList.add('high');
-                    break;
-            }
-            
-            densityIndicator.textContent = densityText;
-            
-            // MODIFIED: Simplified alert logic - only check threshold once
-            // Check current count against threshold - single alert logic
-            if (currentCount > alertThreshold) {
-                showAlert("<i class='fas fa-exclamation-triangle'></i> Alert: Current count exceeds threshold!");
-            } else {
-                hideAlert();
-            }
-            
-            // Fetch prediction
-            getNextMinutePrediction(currentCount);
-        })
-        .catch(error => {
-            console.error('Error fetching heatmap data:', error);
-        });
-}
-
-// Store zone data to prevent flickering
-let lastZoneData = null;
-
-// Update zone information
-function updateZoneInfo() {
-    fetch('/zone_data')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Store valid zone data when received
-            if (data && data.zones && Object.keys(data.zones).length > 0) {
-                lastZoneData = data;
-            } else if (lastZoneData) {
-                // Use last valid data if current data is empty or invalid
-                data = lastZoneData;
-            }
-            
-            // Update zone information
-            const zonesContainer = document.getElementById('zones-info');
-            if (!zonesContainer) return; // Exit if container doesn't exist
-            
-            zonesContainer.innerHTML = '';
-            
-            for (const [zoneId, zoneInfo] of Object.entries(data.zones)) {
-                const zoneCard = document.createElement('div');
-                zoneCard.className = 'zone-card';
-                
-                // Convert BGR color to CSS RGB color
-                const bgr = zoneInfo.color;
-                const rgb = `rgb(${bgr[2]}, ${bgr[1]}, ${bgr[0]})`;
-                
-                // Determine density class for styling
-                let densityClass = 'density-low';
-                if (zoneInfo.density === 'medium') {
-                    densityClass = 'density-medium';
-                } else if (zoneInfo.density === 'high') {
-                    densityClass = 'density-high';
-                }
-                
-                zoneCard.innerHTML = `
-                    <div class="zone-title">
-                        <span class="zone-color" style="background-color: ${rgb};"></span>
-                        Zone ${zoneId}
-                    </div>
-                    <div class="zone-details">People Count: ${zoneInfo.count}</div>
-                    <div class="zone-details">Density: <span class="${densityClass}">${zoneInfo.density.toUpperCase()}</span></div>
-                `;
-                
-                zonesContainer.appendChild(zoneCard);
-            }
-            
-            // Update recommendations
-            const recommendationList = document.getElementById('recommendation-list');
-            if (recommendationList) {
-                recommendationList.innerHTML = '';
-                
-                if (data.recommendations && data.recommendations.length > 0) {
-                    data.recommendations.forEach(recommendation => {
-                        const li = document.createElement('li');
-                        li.textContent = recommendation;
-                        recommendationList.appendChild(li);
-                    });
-                } else {
-                    const li = document.createElement('li');
-                    li.textContent = 'No movement recommendations at this time.';
-                    recommendationList.appendChild(li);
-                }
-            }
-            
-            // If there was a total-people-count element in the document
-            const totalPeopleCount = document.getElementById('total-people-count');
-            if (totalPeopleCount && data.total_people) {
-                totalPeopleCount.textContent = data.total_people;
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching zone data:', error);
-            // If we have previous valid data, continue using it
-            if (lastZoneData) {
-                updateZonesDisplay(lastZoneData);
-            }
-        });
-}
-
-// Function to update zones display with data
-function updateZonesDisplay(data) {
-    const zonesContainer = document.getElementById('zones-info');
-    if (!zonesContainer) return;
-    
-    zonesContainer.innerHTML = '';
-    
-    for (const [zoneId, zoneInfo] of Object.entries(data.zones)) {
-        const zoneCard = document.createElement('div');
-        zoneCard.className = 'zone-card';
-        
-        // Convert BGR color to CSS RGB color
-        const bgr = zoneInfo.color;
-        const rgb = `rgb(${bgr[2]}, ${bgr[1]}, ${bgr[0]})`;
-        
-        // Determine density class for styling
-        let densityClass = 'density-low';
-        if (zoneInfo.density === 'medium') {
-            densityClass = 'density-medium';
-        } else if (zoneInfo.density === 'high') {
-            densityClass = 'density-high';
-        }
-        
-        zoneCard.innerHTML = `
-            <div class="zone-title">
-                <span class="zone-color" style="background-color: ${rgb};"></span>
-                Zone ${zoneId}
-            </div>
-            <div class="zone-details">People Count: ${zoneInfo.count}</div>
-            <div class="zone-details">Density: <span class="${densityClass}">${zoneInfo.density.toUpperCase()}</span></div>
-        `;
-        
-        zonesContainer.appendChild(zoneCard);
-    }
-}
-
-// Update information periodically with error handling
-let zoneInfoUpdateInterval = setInterval(updateZoneInfo, 3000);
-
-// Get prediction for next minute
-function getNextMinutePrediction(currentCrowd) {
-    const now = new Date();
-    console.log("current crowd = ", currentCrowd);
-    const payload = {
-        hour: now.getHours(),
-        day_of_week: (now.getDay() + 6) % 7, // Adjust Sunday (0) to be last
-        current_crowd: currentCrowd
-    };
-    
-    // Log the payload being sent
-    console.log('Sending prediction request with payload:', payload);
-    
-    fetch("/predict", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Log the full response
-        console.log('Prediction API response:', data);
-        
-        // Check if the expected field exists
-        if (data && typeof data.next_minute_prediction !== 'undefined') {
-            let prediction = data.next_minute_prediction;
-            
-            // Validate prediction
-            if (typeof prediction !== 'number' || prediction < 0) {
-                console.warn('Invalid prediction value:', prediction);
-                throw new Error('Invalid prediction value received');
-            }
-            
-            // Add some randomness for demo purposes
-            prediction = Math.round(prediction + Math.floor(Math.random() * 11) + 2);
-            
-            // Update prediction display with icon
-            const predictionDiv = document.getElementById('predictionDisplay');
-            if (predictionDiv) {
-                predictionDiv.innerHTML = `<i class="fas fa-chart-line"></i> Next Min Crowd Prediction: <strong>${prediction}</strong>`;
-            }
-            
-            // Update chart with current count and prediction
-            updateChart(currentCrowd, prediction);
-            
-            // REMOVED: Alert logic from prediction function
-            // The alert will only be shown based on current count in updatePeopleCount()
-        } else {
-            console.error('Prediction response missing next_minute_prediction:', data);
-            throw new Error('Missing next_minute_prediction in response');
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching prediction:', error);
-        // Fallback: Use current count as prediction
-        const predictionDiv = document.getElementById('predictionDisplay');
-        if (predictionDiv) {
-            predictionDiv.textContent = 'Prediction unavailable';
-        }
-        updateChart(currentCrowd, currentCrowd);
-    });
-}
-
-// Chart setup and update
-let crowdChart;
-const maxDataPoints = 60; // Show data for 60 time points
-const crowdData = {
-    labels: [], // For timestamps
-    currentCounts: [], // For actual counts
-    predictedCounts: [] // For predicted counts
-};
-
-function setupCrowdChart() {
-    const ctx = document.getElementById('crowdTrendChart');
-    if (!ctx) {
-        console.error('Canvas element "crowdTrendChart" not found');
-        return;
-    }
-    
-    const ctxContext = ctx.getContext('2d');
-    
-    // Set gradient for chart
-    const gradientFill = ctxContext.createLinearGradient(0, 0, 0, 400);
-    gradientFill.addColorStop(0, 'rgba(52, 152, 219, 0.3)');
-    gradientFill.addColorStop(1, 'rgba(52, 152, 219, 0.0)');
-    
-    // Create alert message element if it doesn't exist
-    if (!document.querySelector('.graph-container .alert-message')) {
-        const alertMessageElement = document.createElement('div');
-        alertMessageElement.className = 'alert-message';
-        alertMessageElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Overcrowding predicted!';
-        const graphContainer = document.querySelector('.graph-container');
-        if (graphContainer) {
-            graphContainer.appendChild(alertMessageElement);
-        }
-    }
-    
-    crowdChart = new Chart(ctxContext, {
-        type: 'line',
-        data: {
-            labels: crowdData.labels,
-            datasets: [
-                {
-                    label: 'Predicted Crowd',
-                    data: crowdData.predictedCounts,
-                    borderColor: '#3498db',
-                    backgroundColor: gradientFill,
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#3498db',
-                    pointBorderColor: '#fff',
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#3498db'
-                },
-                {
-                    label: 'Current Crowd',
-                    data: crowdData.currentCounts,
-                    borderColor: '#7f8c8d',
-                    borderDash: [5, 5],
-                    borderWidth: 2,
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 3
-                },
-                {
-                    label: 'Alert Threshold',
-                    data: Array(maxDataPoints).fill(alertThreshold),
-                    borderColor: '#e74c3c',
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointRadius: 0,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false, // Disable animations
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'People Count',
-                        font: {
-                            family: "'Poppins', sans-serif",
-                            size: 14
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Time',
-                        font: {
-                            family: "'Poppins', sans-serif",
-                            size: 14
-                        }
-                    },
-                    grid: {
-                        display: false
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        font: {
-                            family: "'Poppins', sans-serif",
-                            size: 12
-                        },
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    titleFont: {
-                        family: "'Poppins', sans-serif",
-                        size: 13
-                    },
-                    bodyFont: {
-                        family: "'Poppins', sans-serif",
-                        size: 12
-                    },
-                    padding: 10,
-                    cornerRadius: 6,
-                    caretSize: 6
-                }
-            }
-        }
-    });
-}
-
-function updateChart(currentCount, predictedCount) {
-    const now = new Date();
-    const timeLabel = now.getHours() + ':' + 
-                      (now.getMinutes() < 10 ? '0' : '') + now.getMinutes() + ':' + 
-                      (now.getSeconds() < 10 ? '0' : '') + now.getSeconds();
-    
-    // Log chart update data
-    console.log('Updating chart with:', { currentCount, predictedCount, timeLabel });
-    
-    // Add new data
-    crowdData.labels.push(timeLabel);
-    crowdData.currentCounts.push(currentCount);
-    crowdData.predictedCounts.push(predictedCount);
-    
-    // Remove old data if we exceed maxDataPoints
-    if (crowdData.labels.length > maxDataPoints) {
-        crowdData.labels.shift();
-        crowdData.currentCounts.shift();
-        crowdData.predictedCounts.shift();
-    }
-    
-    // Update chart if it exists
-    if (crowdChart) {
-        try {
-            crowdChart.update('none'); // Update without animation
-        } catch (error) {
-            console.error('Error updating chart:', error);
-        }
-    }
-    
-    // REMOVED: Alert handling moved to updatePeopleCount function
-}
-
-// Initialize on page load with error handling
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        setupCrowdChart();
-        updatePeopleCount();
-        updateZoneInfo(); // Initial zone update
-        
-        // Set up interval with error handling
-        const peopleCountInterval = setInterval(function() {
-            try {
-                updatePeopleCount();
-            } catch (error) {
-                console.error('Error in updatePeopleCount interval:', error);
-            }
-        }, 1000);
-        
-        // Clean up intervals if page unloads
-        window.addEventListener('beforeunload', function() {
-            clearInterval(peopleCountInterval);
-            clearInterval(zoneInfoUpdateInterval);
-        });
-    } catch (error) {
-        console.error('Error during initialization:', error);
-    }
-});
-    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
     /* =========================================================
-       Browser Webcam — getUserMedia → /process_frame → display
+       State & Configuration
        ========================================================= */
+    let browserWebcamRunning = false;
     let webcamStream = null;
-    let webcamFrameLoop = null;
-    let webcamRunning = false;
-    const WEBCAM_FPS = 15; // frames per second sent to server
+    let audioAlertsEnabled = true;
+    let targetFps = 15;
+    let jpegQuality = 0.75;
+    let lastFrameTime = performance.now();
 
+    const maxDataPoints = 30;
+    let crowdChart = null;
+    const chartData = {
+        labels: [],
+        current: [],
+        predicted: []
+    };
+
+    /* =========================================================
+       Audio Synthesizer for Alerts (No external audio file needed)
+       ========================================================= */
+    function playAlertBeep(freq = 600, duration = 200) {
+        if (!audioAlertsEnabled) return;
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration / 1000);
+        } catch (e) {}
+    }
+
+    function toggleAudioAlerts() {
+        audioAlertsEnabled = !audioAlertsEnabled;
+        const btn = document.getElementById('audioToggleBtn');
+        if (audioAlertsEnabled) {
+            btn.innerHTML = `<i class="fas fa-volume-up" id="audioIcon"></i> Sound Alerts: ON`;
+            btn.style.color = '#38bdf8';
+            playAlertBeep(800, 150);
+        } else {
+            btn.innerHTML = `<i class="fas fa-volume-mute" id="audioIcon"></i> Sound Alerts: OFF`;
+            btn.style.color = '#94a3b8';
+        }
+    }
+
+    /* =========================================================
+       Toast Notification System
+       ========================================================= */
+    const lastToastTimes = {};
+    function showToast(title, message, type = 'info') {
+        const now = Date.now();
+        if (lastToastTimes[title] && now - lastToastTimes[title] < 8000) return; // rate limit per title
+        lastToastTimes[title] = now;
+
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast-item ${type === 'danger' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : '')}`;
+        
+        let icon = type === 'danger' ? 'fa-triangle-exclamation' : (type === 'warning' ? 'fa-exclamation-circle' : 'fa-info-circle');
+        let iconColor = type === 'danger' ? '#ef4444' : (type === 'warning' ? '#eab308' : '#38bdf8');
+
+        toast.innerHTML = `
+            <i class="fas ${icon}" style="color:${iconColor}; font-size:1.2rem; margin-top:0.1rem;"></i>
+            <div class="toast-content">
+                <h4>${title}</h4>
+                <p>${message}</p>
+            </div>
+        `;
+
+        container.appendChild(toast);
+        if (type === 'danger' || type === 'warning') playAlertBeep(type === 'danger' ? 880 : 660, 300);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    /* =========================================================
+       Browser Webcam — Direct Integration inside Dedicated Feeds
+       ========================================================= */
     async function startBrowserWebcam() {
-        const statusEl = document.getElementById('webcamStatus');
+        const videoEl = document.getElementById('hiddenWebcamVideo');
         const startBtn = document.getElementById('startWebcamBtn');
-        const stopBtn  = document.getElementById('stopWebcamBtn');
-        const feedDiv  = document.getElementById('webcamFeeds');
-        const videoEl  = document.getElementById('webcamVideo');
-
-        statusEl.textContent = 'Requesting camera permission…';
-        statusEl.className = 'webcam-status';
+        const stopBtn = document.getElementById('stopWebcamBtn');
+        const settings = document.getElementById('webcamSettings');
 
         try {
             webcamStream = await navigator.mediaDevices.getUserMedia({
@@ -1312,122 +1030,326 @@ document.addEventListener('DOMContentLoaded', function() {
                 audio: false
             });
         } catch (err) {
-            const msg = err.name === 'NotAllowedError'
-                ? 'Camera permission denied. Please allow camera access in your browser.'
-                : `Camera error: ${err.message}`;
-            statusEl.textContent = msg;
-            statusEl.className = 'webcam-status error';
+            showToast('Camera Permission Error', 'Please grant webcam access in your browser.', 'danger');
             return;
         }
 
         videoEl.srcObject = webcamStream;
         await videoEl.play();
 
-        webcamRunning = true;
+        browserWebcamRunning = true;
         startBtn.style.display = 'none';
-        stopBtn.style.display = '';
-        feedDiv.classList.add('visible');
-        statusEl.textContent = '🟢 Live — sending frames for detection';
-        statusEl.className = 'webcam-status active';
+        stopBtn.style.display = 'inline-flex';
+        settings.classList.add('visible');
 
-        scheduleNextWebcamFrame();
+        showToast('Webcam Live', 'Streaming browser camera to dedicated detection cards.', 'info');
+        processNextWebcamFrame();
     }
 
-    function scheduleNextWebcamFrame() {
-        if (!webcamRunning) return;
-        setTimeout(captureAndSendFrame, 1000 / WEBCAM_FPS);
+    function updateWebcamSettings() {
+        targetFps = parseInt(document.getElementById('fpsSelect').value);
+        jpegQuality = parseFloat(document.getElementById('qualitySlider').value);
+        document.getElementById('qualityValText').textContent = jpegQuality.toFixed(2);
     }
 
-    async function captureAndSendFrame() {
-        if (!webcamRunning) return;
+    async function processNextWebcamFrame() {
+        if (!browserWebcamRunning) return;
 
-        const videoEl   = document.getElementById('webcamVideo');
-        const captureCanvas = document.getElementById('webcamCanvas');
-        const rawCanvas = document.getElementById('rawPreviewCanvas');
-        const annotated = document.getElementById('annotatedCanvas');
+        const videoEl = document.getElementById('hiddenWebcamVideo');
+        const canvas = document.getElementById('hiddenCaptureCanvas');
+        const videoFeedImg = document.getElementById('videoFeedImg');
+        const heatmapFeedImg = document.getElementById('heatmapFeedImg');
 
-        const w = videoEl.videoWidth  || 640;
+        const w = videoEl.videoWidth || 640;
         const h = videoEl.videoHeight || 480;
-        // Use downscaled size for transmission
-        const sendW = SEND_WIDTH;
-        const sendH = SEND_HEIGHT;
 
-        // Size canvases: capture canvas uses downscaled size, others keep original
-        captureCanvas.width = sendW; captureCanvas.height = sendH;
-        rawCanvas.width = w; rawCanvas.height = h;
-        annotated.width = w; annotated.height = h;
+        canvas.width = 480;
+        canvas.height = 320;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, 480, 320);
 
-        // Draw raw frame onto capture canvas (downscaled)
-        const ctx = captureCanvas.getContext('2d');
-        ctx.drawImage(videoEl, 0, 0, sendW, sendH);
-
-        // Show raw preview
-        rawCanvas.getContext('2d').drawImage(videoEl, 0, 0, w, h);
-
-        // Convert to JPEG base64
-        const frameB64 = captureCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
+        const frameB64 = canvas.toDataURL('image/jpeg', jpegQuality);
 
         try {
-            const resp = await fetch('/process_frame', {
+            const res = await fetch('/process_frame', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ frame: frameB64 })
             });
 
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data.frame) {
-                    // Draw annotated frame
-                    const img = new Image();
-            // Update quality display when slider changes
-            const qualitySlider = document.getElementById('qualitySlider');
-            const qualityValue = document.getElementById('qualityValue');
-            qualitySlider.addEventListener('input', () => {
-                JPEG_QUALITY = parseFloat(qualitySlider.value);
-                qualityValue.textContent = JPEG_QUALITY.toFixed(2);
-            });
-                    img.onload = () => annotated.getContext('2d').drawImage(img, 0, 0, w, h);
-                    img.src = data.frame;
+            if (res.ok) {
+                const data = await res.json();
+                
+                // Update live video feed img & heatmap feed img simultaneously
+                if (data.frame) videoFeedImg.src = data.frame;
+                if (data.heatmap) heatmapFeedImg.src = data.heatmap;
 
-                    // Update people counter from webcam data too
-                    if (typeof data.people_count !== 'undefined') {
-                        countDisplay.innerHTML = `<i class="fas fa-users"></i> People: ${data.people_count}`;
-                        peopleCounter.classList.remove('low', 'medium', 'high');
-                        peopleCounter.classList.add(data.density_level || 'low');
-                        densityIndicator.textContent =
-                            (data.density_level || 'low').charAt(0).toUpperCase() +
-                            (data.density_level || 'low').slice(1) + ' Density';
-                    }
+                // Update metrics & HUD directly
+                if (typeof data.people_count !== 'undefined') {
+                    updateDashboardMetrics({
+                        people_count: data.people_count,
+                        density_level: data.density_level,
+                        predictive_metrics: data.predictive_metrics,
+                        zones: data.zones,
+                        recommendations: data.recommendations
+                    });
                 }
+
+                // Update FPS counter badge
+                const now = performance.now();
+                const fps = Math.round(1000 / (now - lastFrameTime));
+                lastFrameTime = now;
+                document.getElementById('fpsCounterVal').textContent = `${fps} FPS`;
             }
         } catch (e) {
-            console.warn('Frame send error:', e);
+            console.warn('Webcam frame process error:', e);
         }
 
-        scheduleNextWebcamFrame();
+        if (browserWebcamRunning) {
+            setTimeout(processNextWebcamFrame, 1000 / targetFps);
+        }
     }
 
     function stopBrowserWebcam() {
-        webcamRunning = false;
+        browserWebcamRunning = false;
         if (webcamStream) {
             webcamStream.getTracks().forEach(t => t.stop());
             webcamStream = null;
         }
-        const startBtn = document.getElementById('startWebcamBtn');
-        const stopBtn  = document.getElementById('stopWebcamBtn');
-        const feedDiv  = document.getElementById('webcamFeeds');
-        const statusEl = document.getElementById('webcamStatus');
-        startBtn.style.display = '';
-        stopBtn.style.display = 'none';
-        feedDiv.classList.remove('visible');
-        statusEl.textContent = 'Camera stopped';
-        statusEl.className = 'webcam-status';
+
+        document.getElementById('startWebcamBtn').style.display = 'inline-flex';
+        document.getElementById('stopWebcamBtn').style.display = 'none';
+        document.getElementById('webcamSettings').classList.remove('visible');
+
+        // Restore server stream endpoints
+        document.getElementById('videoFeedImg').src = "{{ url_for('video_feed') }}";
+        document.getElementById('heatmapFeedImg').src = "{{ url_for('heatmap_feed') }}";
+
+        showToast('Camera Stopped', 'Switched back to standard stream feed.', 'info');
     }
 
-    // Hide browser webcam on mobile if getUserMedia not supported
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        document.getElementById('webcamSection').style.display = 'none';
+    /* =========================================================
+       Full-Screen FOV Modal Overlay
+       ========================================================= */
+    function openFovModal(type) {
+        const modal = document.getElementById('fovModal');
+        const modalImg = document.getElementById('fovModalImg');
+        const titleText = document.getElementById('fovHudTitleText');
+
+        if (type === 'video') {
+            titleText.textContent = 'FIELD OF VIEW — LIVE PERSON DETECTOR';
+            modalImg.src = document.getElementById('videoFeedImg').src;
+        } else {
+            titleText.textContent = 'FIELD OF VIEW — REAL-TIME DENSITY HEATMAP';
+            modalImg.src = document.getElementById('heatmapFeedImg').src;
+        }
+
+        modal.classList.add('active');
     }
+
+    function closeFovModal() {
+        document.getElementById('fovModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeFovModal();
+    });
+
+    /* =========================================================
+       Dashboard Data Updates & Analytics
+       ========================================================= */
+    function updateDashboardMetrics(data) {
+        const count = data.people_count || 0;
+        const level = data.density_level || 'low';
+        const metrics = data.predictive_metrics || {};
+
+        // Overlay counter
+        document.getElementById('livePeopleCount').textContent = count;
+        const pill = document.getElementById('liveDensityPill');
+        pill.textContent = level.toUpperCase();
+        pill.className = `density-pill ${level}`;
+
+        // Capacity Bar
+        const capacityPct = metrics.capacity_pct || 0;
+        document.getElementById('capacityValue').textContent = `${capacityPct}%`;
+        document.getElementById('occupancyText').textContent = `${count} people detected`;
+        const barFill = document.getElementById('capacityBarFill');
+        barFill.style.width = `${capacityPct}%`;
+        barFill.className = `progress-bar-fill ${capacityPct > 80 ? 'high' : ''}`;
+
+        // Flow Velocity
+        const surge = metrics.surge_rate || 0.0;
+        document.getElementById('flowVelocityVal').textContent = `${surge > 0 ? '+' : ''}${surge}/m`;
+        const trendText = document.getElementById('trendStatusText');
+        const trend = metrics.trend || 'stable';
+
+        if (trend === 'rapid_surge' || trend === 'rising') {
+            trendText.innerHTML = `<i class="fas fa-arrow-up" style="color:var(--accent-yellow);"></i> Rising Trend`;
+        } else if (trend === 'clearing' || trend === 'rapid_clearing') {
+            trendText.innerHTML = `<i class="fas fa-arrow-down" style="color:var(--primary-cyan);"></i> Clearing Trend`;
+        } else {
+            trendText.innerHTML = `<i class="fas fa-minus" style="color:var(--text-muted);"></i> Flow is Stable`;
+        }
+
+        // Forecast & Risk
+        document.getElementById('forecastVal').textContent = metrics.next_minute_prediction || count;
+        document.getElementById('confidenceVal').textContent = `${metrics.confidence || 95}%`;
+        
+        const riskVal = document.getElementById('riskLevelVal');
+        const riskLevel = metrics.risk_level || 'Normal';
+        riskVal.textContent = riskLevel;
+
+        if (riskLevel === 'Critical Surge') {
+            riskVal.style.color = 'var(--accent-red)';
+            showToast('CRITICAL CROWD SURGE', `People count reached ${count}! High congestion hazard.`, 'danger');
+        } else if (riskLevel === 'Elevated Risk' || riskLevel === 'Surge Warning') {
+            riskVal.style.color = 'var(--accent-yellow)';
+            showToast('Crowd Warning', `Density level elevated (${count} people).`, 'warning');
+        } else {
+            riskVal.style.color = 'var(--accent-green)';
+        }
+
+        // Update Trend Chart
+        const timeLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        pushChartData(timeLabel, count, metrics.next_minute_prediction || count);
+
+        // Update Zones
+        if (data.zones) updateZoneList(data.zones);
+        if (data.recommendations) updateRecommendations(data.recommendations);
+    }
+
+    function updateZoneList(zones) {
+        const container = document.getElementById('zonesListContainer');
+        container.innerHTML = '';
+        Object.keys(zones).forEach(zId => {
+            const z = zones[zId];
+            const item = document.createElement('div');
+            item.className = 'zone-item';
+            
+            const colorRgb = z.color ? `rgb(${z.color[2]},${z.color[1]},${z.color[0]})` : '#38bdf8';
+            
+            item.innerHTML = `
+                <div class="zone-info-left">
+                    <div class="zone-dot" style="background:${colorRgb};"></div>
+                    <div>
+                        <strong style="font-size:0.9rem;">Zone ${zId}</strong>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${z.count || 0} People</div>
+                    </div>
+                </div>
+                <span class="density-pill ${z.density || 'low'}">${(z.density || 'low').toUpperCase()}</span>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function updateRecommendations(recs) {
+        const ul = document.getElementById('recommendationList');
+        if (!recs || recs.length === 0) {
+            ul.innerHTML = `<li><i class="fas fa-check-circle" style="color:var(--accent-green);"></i> Crowd levels optimal across all monitoring zones.</li>`;
+            return;
+        }
+        ul.innerHTML = recs.map(r => `<li><i class="fas fa-exclamation-triangle" style="color:#f87171;"></i> ${r}</li>`).join('');
+    }
+
+    /* =========================================================
+       Chart.js Trend Graph Initialization
+       ========================================================= */
+    function initChart() {
+        const ctx = document.getElementById('crowdTrendChart').getContext('2d');
+        crowdChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Actual Crowd',
+                        data: chartData.current,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'AI Forecast (+1 min)',
+                        data: chartData.predicted,
+                        borderColor: '#a855f7',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8', font: { family: 'Outfit' } } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+    }
+
+    function pushChartData(label, count, predicted) {
+        if (!crowdChart) return;
+        chartData.labels.push(label);
+        chartData.current.push(count);
+        chartData.predicted.push(predicted);
+
+        if (chartData.labels.length > maxDataPoints) {
+            chartData.labels.shift();
+            chartData.current.shift();
+            chartData.predicted.shift();
+        }
+        crowdChart.update('none');
+    }
+
+    /* =========================================================
+       Regular Server Feed Polling (When not using browser webcam)
+       ========================================================= */
+    async function pollServerMetrics() {
+        if (browserWebcamRunning) return;
+        try {
+            const res = await fetch('/heatmap_data');
+            if (res.ok) {
+                const data = await res.json();
+                const zRes = await fetch('/zone_data');
+                let zones = {};
+                let recs = [];
+                if (zRes.ok) {
+                    const zData = await zRes.json();
+                    zones = zData.zones || {};
+                    recs = zData.recommendations || [];
+                }
+                updateDashboardMetrics({
+                    people_count: data.people_count,
+                    density_level: data.density_level,
+                    predictive_metrics: data.predictive_metrics,
+                    zones: zones,
+                    recommendations: recs
+                });
+            }
+        } catch (e) {
+            console.warn('Poll error:', e);
+        }
+    }
+
+    // Display selected file name
+    document.getElementById('videoFile')?.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name || '';
+        document.getElementById('selectedFileName').textContent = fileName ? `Selected: ${fileName}` : '';
+    });
+
+    // Page Load Init
+    document.addEventListener('DOMContentLoaded', () => {
+        initChart();
+        setInterval(pollServerMetrics, 1000);
+    });
     </script>
 </body>
-</html>
+</html>
